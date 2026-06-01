@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlertaFuego Chile</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--red:#DC2626;--orange:#EA580C;--green:#16A34A;--blue:#2563EB;--bg:#EEF0F5;--card:#fff;--card2:#F4F5F8;--border:#E2E5EB;--text:#111827;--muted:#6B7280;--dim:#B0B7C3;--sh:0 1px 4px rgba(0,0,0,.08);--sh-md:0 4px 16px rgba(0,0,0,.10);--sh-lg:0 16px 48px rgba(0,0,0,.14);--r:13px}
+body.dark{--bg:#0B0D14;--card:#161928;--card2:#1E2235;--border:rgba(255,255,255,.08);--text:#F1F2F6;--muted:#8B92A5;--dim:#3D4357;--sh:0 1px 4px rgba(0,0,0,.5);--sh-md:0 4px 16px rgba(0,0,0,.5);--sh-lg:0 16px 48px rgba(0,0,0,.7)}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;transition:background .25s,color .25s}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-track{background:var(--card2);border-radius:10px}
+::-webkit-scrollbar-thumb{background:var(--dim);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+/* HEADER */
+.hdr{background:var(--card);border-bottom:1px solid var(--border);height:56px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:var(--sh);z-index:300;position:relative}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#DC2626,#F97316);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(220,38,38,.35);flex-shrink:0}
+.logo-name{font-size:1rem;font-weight:800;letter-spacing:-.03em}
+.logo-name em{color:var(--red);font-style:normal}
+.logo-sub{font-size:10px;color:var(--muted)}
+.hdr-r{display:flex;align-items:center;gap:7px}
+.pill{background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:4px 11px;font-size:11px;font-weight:500;color:var(--muted)}
+.live-pill{background:#FEF2F2;border:1px solid #FECACA;border-radius:20px;padding:4px 10px;display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--red)}
+body.dark .live-pill{background:rgba(220,38,38,.12);border-color:rgba(220,38,38,.3)}
+.blink{width:6px;height:6px;border-radius:50%;background:var(--red);animation:bl 1.4s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.2}}
+.ibtn{background:var(--card2);border:1px solid var(--border);border-radius:9px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .15s;color:var(--text);font-family:'Inter',sans-serif}
+.ibtn:hover{background:var(--border);transform:scale(1.05)}
+
+/* LAYOUT */
+.app{display:flex;flex:1;overflow:hidden}
+.map-wrap{flex:1;position:relative;overflow:hidden}
+#map{width:100%;height:100%}
+
+/* SIDEBAR */
+.sidebar{width:340px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .3s,opacity .3s;overflow:hidden;box-shadow:var(--sh-md)}
+.sidebar.collapsed{width:0;opacity:0}
+.stabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 4px}
+.stab{flex:1;padding:11px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.stab.on{color:var(--red);border-bottom-color:var(--red)}
+.stab:hover:not(.on){color:var(--text)}
+.sb-body{flex:1;overflow-y:scroll;padding:14px;scroll-behavior:smooth}
+.panel{display:none}.panel.on{display:block}
+
+/* RISKOMETER */
+.rom{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:var(--r);padding:14px;margin-bottom:12px;color:#fff;position:relative;overflow:hidden}
+.rom::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:radial-gradient(circle,rgba(220,38,38,.3),transparent);border-radius:50%}
+.rom-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.rom-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
+.rom-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}
+.rom-loading{font-size:12px;opacity:.6;text-align:center;padding:10px 0}
+.rom-score-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:10px}
+.rom-score{font-size:3rem;font-weight:900;line-height:1}
+.rom-score-sub{font-size:11px;opacity:.6;margin-bottom:6px}
+.rom-bar-bg{background:rgba(255,255,255,.1);border-radius:20px;height:8px;overflow:hidden;margin-bottom:10px}
+.rom-bar{height:100%;border-radius:20px;transition:width 1.5s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444)}
+.rom-factors{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rom-f{background:rgba(255,255,255,.07);border-radius:7px;padding:7px;text-align:center}
+.rom-fv{font-size:13px;font-weight:700;display:block}
+.rom-fl{font-size:9px;opacity:.6;text-transform:uppercase;letter-spacing:.05em}
+.rom-upd{font-size:9px;opacity:.4;margin-top:8px;text-align:right}
+
+/* GPS CARD */
+.gps-card{background:linear-gradient(135deg,#2563EB,#7C3AED);border-radius:var(--r);padding:13px;margin-bottom:12px;color:#fff;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 14px rgba(37,99,235,.3)}
+.gps-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,.4)}
+.gps-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.gps-ico{width:38px;height:38px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.gps-ttl{font-size:13px;font-weight:700}
+.gps-sub{font-size:11px;opacity:.75;margin-top:1px}
+.gps-btn-i{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;color:#fff;width:100%;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;text-align:center}
+.gps-btn-i:hover{background:rgba(255,255,255,.28)}
+.gps-res{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px;display:none}
+.gps-res.show{display:block;animation:fdin .3s ease}
+@keyframes fdin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.gps-rl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--blue);margin-bottom:5px}
+.gps-coords{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;margin-bottom:4px}
+.gps-addr{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.45}
+.gps-rtag{display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:10px;border:1px solid}
+.copybtn{background:var(--blue);color:#fff;border:none;border-radius:7px;padding:7px 0;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;width:100%;transition:background .15s}
+.copybtn:hover{background:#1D4ED8}
+
+/* SEARCH */
+.sbox{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px}
+.sbox h3{font-size:13px;font-weight:700;margin-bottom:3px}
+.sbox p{font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.4}
+.srow{display:flex;gap:6px}
+.srow input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none;transition:border-color .2s;min-width:0}
+.srow input:focus{border-color:rgba(220,38,38,.5);box-shadow:0 0 0 3px rgba(220,38,38,.07)}
+.srow input::placeholder{color:var(--dim)}
+.srow button{background:var(--red);color:#fff;border:none;border-radius:8px;padding:0 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;white-space:nowrap}
+.srow button:hover{background:#B91C1C}
+.slbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:7px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.chip{font-size:11px;font-weight:500;padding:4px 10px;border-radius:16px;border:1px solid var(--border);color:var(--muted);cursor:pointer;background:var(--card);transition:all .15s}
+.chip:hover{border-color:var(--red);color:var(--red);background:#FEF2F2}
+body.dark .chip:hover{background:rgba(220,38,38,.1)}
+
+/* RESULT */
+.result{border-radius:var(--r);padding:13px;margin-bottom:12px;display:none}
+.result.show{display:block;animation:fdin .3s ease}
+.rh{background:#FEF2F2;border:1px solid #FECACA}
+.rm{background:#FFF7ED;border:1px solid #FED7AA}
+.rl{background:#F0FDF4;border:1px solid #BBF7D0}
+body.dark .rh{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25)}
+body.dark .rm{background:rgba(234,88,12,.08);border-color:rgba(234,88,12,.25)}
+body.dark .rl{background:rgba(22,163,74,.08);border-color:rgba(22,163,74,.25)}
+.res-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
+.res-name{font-size:14px;font-weight:700}
+.res-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:16px;color:#fff;white-space:nowrap}
+.rh .res-name{color:#991B1B}.rm .res-name{color:#9A3412}.rl .res-name{color:#166534}
+.rh .res-badge{background:#DC2626}.rm .res-badge{background:#EA580C}.rl .res-badge{background:#16A34A}
+.res-desc{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.rgi{background:rgba(0,0,0,.04);border-radius:7px;padding:7px 9px}
+body.dark .rgi{background:rgba(255,255,255,.05)}
+.rgi-l{font-size:10px;color:var(--dim);font-weight:500;margin-bottom:2px}
+.rgi-v{font-size:12px;font-weight:600}
+
+/* SOS */
+.sos{background:var(--red);border-radius:var(--r);padding:12px;margin-bottom:12px;display:none}
+.sos.show{display:block}
+.sos-t{font-size:10px;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.sos-g{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.sos-n{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:7px;padding:6px 8px;text-align:center;cursor:pointer;text-decoration:none;display:block;transition:background .15s}
+.sos-n:hover{background:rgba(255,255,255,.28)}
+.sos-nn{font-size:15px;font-weight:800;display:block}
+.sos-nl{font-size:10px;opacity:.8;display:block}
+
+/* STATS/INFO */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.sc{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px}
+.sn{font-size:1.45rem;font-weight:800;line-height:1}.sl{font-size:10px;color:var(--muted);margin-top:3px}
+.cr{color:var(--red)}.co{color:var(--orange)}.cb{color:var(--blue)}.cg{color:var(--green)}
+.ib{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:11px;margin-bottom:8px}
+.ib h4{font-size:12px;font-weight:700;margin-bottom:7px}
+.ib ul{list-style:none;font-size:11px;color:var(--muted);line-height:1.9}
+.ib ul li{display:flex;gap:6px}.ib ul li::before{content:"›";color:var(--red);font-weight:800;flex-shrink:0}
+
+/* MAP CONTROLS */
+.map-controls{position:absolute;top:12px;right:12px;z-index:200;display:flex;flex-direction:column;gap:7px}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:9px;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:var(--sh-md);transition:all .15s;color:var(--text);font-family:'Inter',sans-serif}
+.mc:hover{background:var(--card2);transform:scale(1.06)}
+.mc.off{opacity:.4;background:var(--card2)}
+
+/* MAP LEGEND */
+.map-legend{position:absolute;bottom:12px;right:12px;z-index:200;background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:11px;padding:10px 13px;box-shadow:var(--sh-md);backdrop-filter:blur(8px)}
+body.dark .map-legend{background:rgba(22,25,40,.96)}
+.ml-t{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:7px}
+.ml-r{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);margin-bottom:4px}
+.mld{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.mls{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+
+/* SIDEBAR TOGGLE */
+.sb-tog{position:absolute;top:50%;left:0;transform:translateY(-50%);background:var(--card);border:1px solid var(--border);border-left:none;width:18px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:0 8px 8px 0;font-size:10px;color:var(--muted);z-index:201;box-shadow:2px 0 6px rgba(0,0,0,.07)}
+.sb-tog:hover{color:var(--text);background:var(--card2)}
+
+/* FABS */
+.fabs{position:fixed;bottom:14px;left:14px;z-index:200;display:flex;gap:8px}
+.fab{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:9px 15px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:var(--sh-md);color:var(--text);transition:all .2s;font-family:'Inter',sans-serif;position:relative}
+.fab:hover{transform:translateY(-2px);box-shadow:var(--sh-lg)}
+.rfab{background:#011A12;border-color:rgba(52,211,153,.3);color:#34D399}
+.rfab:hover{background:#022c22}
+.nd{position:absolute;top:-5px;right:-5px;width:14px;height:14px;background:var(--red);border-radius:50%;border:2px solid var(--card);display:none;animation:bl 1s infinite}
+.nd.show{display:block}
+.sig{display:flex;gap:2px;align-items:flex-end}
+.sig span{background:#34D399;width:3px;border-radius:1px}
+.sig span:nth-child(1){height:4px;animation:sa 1.2s infinite}
+.sig span:nth-child(2){height:7px;animation:sb 1.2s .15s infinite}
+.sig span:nth-child(3){height:10px;animation:sc 1.2s .3s infinite}
+@keyframes sa{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes sb{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes sc{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* MODAL BASE */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:flex-end;justify-content:flex-end;padding:14px;backdrop-filter:blur(5px)}
+.mbg.open{display:flex;animation:fdin .2s ease}
+@keyframes slup{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* BOT MODAL */
+.bot-m{background:var(--card);border:1px solid var(--border);border-radius:16px;width:360px;height:480px;display:flex;flex-direction:column;box-shadow:var(--sh-lg);animation:slup .25s ease;margin-bottom:54px;overflow:hidden}
+.bot-head{background:linear-gradient(135deg,#DC2626,#EA580C);padding:12px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.bot-av{width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.bot-hi h3{font-size:13px;font-weight:700;color:#fff}
+.bot-hi p{font-size:10px;color:rgba(255,255,255,.75)}
+.bot-x{margin-left:auto;background:rgba(255,255,255,.2);border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center}
+.bot-x:hover{background:rgba(255,255,255,.35)}
+.bot-qs{padding:7px 10px;display:flex;gap:5px;overflow-x:scroll;border-bottom:1px solid var(--border);flex-shrink:0}
+.bq{font-size:10px;padding:4px 9px;border-radius:14px;border:1px solid var(--border);color:var(--muted);cursor:pointer;white-space:nowrap;background:var(--card2);transition:all .15s;flex-shrink:0;font-family:'Inter',sans-serif}
+.bq:hover{border-color:var(--red);color:var(--red)}
+.bot-msgs{flex:1;overflow-y:scroll;padding:10px;display:flex;flex-direction:column;gap:7px}
+.bm{max-width:88%;font-size:11.5px;line-height:1.55;padding:8px 11px;border-radius:10px;white-space:pre-line;animation:fdin .2s}
+.bb{background:var(--card2);border:1px solid var(--border);color:var(--text);align-self:flex-start;border-bottom-left-radius:3px}
+.bu{background:var(--red);color:#fff;align-self:flex-end;border-bottom-right-radius:3px}
+.bot-inr{padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:6px;flex-shrink:0}
+.bot-inr input{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:7px 11px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none;transition:border-color .2s;min-width:0}
+.bot-inr input:focus{border-color:rgba(220,38,38,.5)}
+.bot-inr input::placeholder{color:var(--dim)}
+.bot-send{background:var(--red);border:none;border-radius:7px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bot-send:hover{background:#B91C1C}
+.bot-send svg{width:13px;height:13px;fill:#fff}
+
+/* RADIO MODAL */
+.rad-m{background:#011A12;border:1px solid rgba(52,211,153,.2);border-radius:16px;width:400px;max-height:520px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.7);animation:slup .25s ease;margin-bottom:54px;overflow:hidden}
+.rad-head{background:#022c22;padding:12px 14px;border-bottom:1px solid rgba(52,211,153,.12);flex-shrink:0}
+.rad-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.rad-title{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#34D399;letter-spacing:.07em}
+.rad-x{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);border-radius:6px;width:26px;height:26px;cursor:pointer;color:#34D399;font-size:14px;display:flex;align-items:center;justify-content:center}
+.rad-x:hover{background:rgba(52,211,153,.2)}
+.rad-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:#6EE7B7;opacity:.55}
+.notif-row{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(52,211,153,.1);flex-shrink:0}
+.notif-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:#6EE7B7;opacity:.7}
+.tsw{position:relative;width:36px;height:20px;cursor:pointer;display:inline-block}
+.tsw input{opacity:0;width:0;height:0;position:absolute}
+.ttrack{position:absolute;inset:0;background:#1e3a2f;border-radius:20px;border:1px solid rgba(52,211,153,.3);transition:background .2s}
+.tthumb{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#34D399;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.4);pointer-events:none}
+.tsw input:checked+.ttrack{background:#064E3B}
+.tsw input:checked~.tthumb{transform:translateX(16px)}
+.rad-player{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(52,211,153,.1);flex-shrink:0}
+.rad-player p{font-size:10px;color:#6EE7B7;opacity:.65;flex:1;line-height:1.4;font-family:'JetBrains Mono',monospace}
+.play-btn{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);border-radius:7px;padding:6px 11px;font-size:11px;font-weight:700;color:#34D399;cursor:pointer;font-family:'JetBrains Mono',monospace;white-space:nowrap;transition:all .15s}
+.play-btn:hover{background:rgba(52,211,153,.22)}
+.rad-feed{flex:1;overflow-y:scroll;padding:10px}
+.re{padding:7px 9px;border-radius:6px;border-left:2px solid;margin-bottom:5px;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.6}
+.re-alert{border-left-color:#EF4444;background:rgba(239,68,68,.06)}
+.re-normal{border-left-color:#34D399;background:rgba(52,211,153,.04)}
+.re-static{border-left-color:#374151;opacity:.35}
+.re-time{color:#34D399;opacity:.6}
+.re-region{color:#FCD34D;opacity:.8}
+.re-code{color:#FCD34D;font-weight:700}
+.re-alert .re-txt{color:#FCA5A5}
+.re-normal .re-txt{color:#A7F3D0}
+.re-static .re-txt{color:#6B7280;font-style:italic}
+
+/* INFO MODAL */
+.info-m{background:var(--card);border:1px solid var(--border);border-radius:16px;width:320px;box-shadow:var(--sh-lg);animation:slup .25s ease;margin-bottom:54px;overflow:hidden}
+.info-head{background:linear-gradient(135deg,#1E293B,#334155);padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.info-head h3{font-size:13px;font-weight:700;color:#fff}
+.info-x{background:rgba(255,255,255,.15);border:none;border-radius:7px;width:27px;height:27px;cursor:pointer;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
+.info-body{padding:16px;overflow-y:scroll;max-height:420px}
+.info-an{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--red);margin-bottom:4px}
+.info-desc{font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:14px}
+.info-tl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.team-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.tm{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:8px 11px}
+.tm-av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.tm-name{font-size:12px;font-weight:600}
+.tm-role{font-size:10px;color:var(--muted)}
+.info-inst{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.info-inst-ico{font-size:22px}
+.info-inst-name{font-size:12px;font-weight:700}
+.info-inst-sub{font-size:11px;color:var(--muted)}
+.info-ver{font-size:10px;color:var(--dim);text-align:center;margin-top:12px;font-family:'JetBrains Mono',monospace}
+
+/* TOAST */
+.toast{position:fixed;top:66px;right:14px;z-index:2000;background:#022c22;border:1px solid rgba(52,211,153,.35);border-radius:12px;padding:10px 13px;display:none;align-items:center;gap:10px;box-shadow:0 8px 28px rgba(0,0,0,.5);max-width:280px}
+.toast.show{display:flex;animation:slinr .4s cubic-bezier(.4,0,.2,1)}
+@keyframes slinr{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.t-ico{font-size:18px;flex-shrink:0}
+.t-txt p{font-size:11px;font-weight:700;color:#34D399;font-family:'JetBrains Mono',monospace}
+.t-txt span{font-size:10px;color:#6EE7B7;opacity:.75;font-family:'JetBrains Mono',monospace;display:block;margin-top:2px}
+.t-x{background:none;border:none;color:#6EE7B7;cursor:pointer;font-size:16px;margin-left:4px;flex-shrink:0}
+
+.leaflet-popup-content-wrapper{border-radius:11px!important;box-shadow:var(--sh-lg)!important;font-family:'Inter',sans-serif!important;font-size:12px!important}
+.leaflet-popup-tip-container{display:none}
+.leaflet-control-zoom{border-radius:9px!important;overflow:hidden;border:1px solid var(--border)!important;box-shadow:var(--sh-md)!important}
+.leaflet-control-zoom a{background:var(--card)!important;color:var(--text)!important;border-bottom-color:var(--border)!important}
+.leaflet-control-zoom a:hover{background:var(--card2)!important}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-icon">&#x1F525;</div>
+    <div>
+      <div class="logo-name">Alerta<em>Fuego</em> <span style="font-weight:300;font-size:.82rem">Chile</span></div>
+      <div class="logo-sub">Sistema nacional de riesgo de incendios</div>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <div class="pill">&#x1F4C5; 25 mayo 2026</div>
+    <div class="live-pill"><div class="blink"></div>Sistema activo</div>
+    <button class="ibtn" onclick="toggleDark()" id="theme-btn">&#x1F319;</button>
+    <button class="ibtn" onclick="toggleSidebar()">&#9776;</button>
+  </div>
+</div>
+
+<div class="app">
+  <div class="sidebar" id="sidebar">
+    <div class="stabs">
+      <div class="stab on" data-p="buscar">&#x1F50D; Buscar</div>
+      <div class="stab" data-p="info">&#x1F4CA; Info</div>
+      <div class="stab" data-p="guia">&#x1F4CB; Guia</div>
+    </div>
+    <div class="sb-body">
+      <div class="panel on" id="panel-buscar">
+        <div class="rom">
+          <div class="rom-top">
+            <div class="rom-title">&#x26A1; Indice de riesgo hoy</div>
+            <div class="rom-badge" id="rom-badge">Cargando...</div>
+          </div>
+          <div class="rom-loading" id="rom-loading">Obteniendo datos meteorologicos...</div>
+          <div id="rom-data" style="display:none">
+            <div class="rom-score-row">
+              <div class="rom-score" id="rom-score">-</div>
+              <div class="rom-score-sub">/100<br>riesgo hoy</div>
+            </div>
+            <div class="rom-bar-bg"><div class="rom-bar" id="rom-bar" style="width:0%"></div></div>
+            <div class="rom-factors">
+              <div class="rom-f"><span class="rom-fv" id="rf-t">-</span><span class="rom-fl">&#x1F321;&#xFE0F; Temp</span></div>
+              <div class="rom-f"><span class="rom-fv" id="rf-h">-</span><span class="rom-fl">&#x1F4A7; Humedad</span></div>
+              <div class="rom-f"><span class="rom-fv" id="rf-w">-</span><span class="rom-fl">&#x1F32C;&#xFE0F; Viento</span></div>
+            </div>
+          </div>
+          <div class="rom-upd" id="rom-upd"></div>
+        </div>
+
+        <div class="gps-card" onclick="getGPS()">
+          <div class="gps-top">
+            <div class="gps-ico">&#x1F4CD;</div>
+            <div><div class="gps-ttl">Mi ubicacion actual</div><div class="gps-sub">Ver riesgo de tu zona en tiempo real</div></div>
+          </div>
+          <div class="gps-btn-i">&#x1F4E1; Detectar mi posicion GPS</div>
+        </div>
+        <div class="gps-res" id="gps-res">
+          <div class="gps-rl">&#x1F4CD; Tu ubicacion</div>
+          <div class="gps-coords" id="gps-coords">-</div>
+          <div class="gps-addr" id="gps-addr">Obteniendo direccion...</div>
+          <div id="gps-rtag" class="gps-rtag"></div>
+          <button class="copybtn" onclick="copyGPS()">&#x1F4CB; Copiar para dar a Bomberos (132)</button>
+        </div>
+
+        <div class="sbox">
+          <h3>Buscar zona o ciudad</h3>
+          <p>Ciudad, region o barrio en Chile</p>
+          <div class="srow">
+            <input id="addr-in" type="text" placeholder="Ej: Valparaiso, Temuco..." onkeydown="if(event.key==='Enter')doSearch()">
+            <button onclick="doSearch()">Buscar</button>
+          </div>
+        </div>
+
+        <div class="slbl">Zonas frecuentes</div>
+        <div class="chips">
+          <span class="chip" onclick="lz('vp_baron')">Cerro Baron</span>
+          <span class="chip" onclick="lz('vp_rodelillo')">Rodelillo</span>
+          <span class="chip" onclick="lz('vp_alegre')">C. Alegre</span>
+          <span class="chip" onclick="lz('santiago')">Santiago RM</span>
+          <span class="chip" onclick="lz('concepcion')">Concepcion</span>
+          <span class="chip" onclick="lz('temuco')">Temuco</span>
+          <span class="chip" onclick="lz('vina')">Vina del Mar</span>
+          <span class="chip" onclick="lz('serena')">La Serena</span>
+          <span class="chip" onclick="lz('pucon')">Pucon</span>
+          <span class="chip" onclick="lz('santaolga')">Santa Olga</span>
+        </div>
+
+        <div class="result" id="result-card">
+          <div class="res-top">
+            <div class="res-name" id="r-name">-</div>
+            <div class="res-badge" id="r-badge">-</div>
+          </div>
+          <div class="res-desc" id="r-desc">-</div>
+          <div class="res-grid">
+            <div class="rgi"><div class="rgi-l">Vegetacion</div><div class="rgi-v" id="r-veg">-</div></div>
+            <div class="rgi"><div class="rgi-l">Terreno</div><div class="rgi-v" id="r-pend">-</div></div>
+            <div class="rgi"><div class="rgi-l">Acceso bomberos</div><div class="rgi-v" id="r-acc">-</div></div>
+            <div class="rgi"><div class="rgi-l">Temporada critica</div><div class="rgi-v" id="r-temp">-</div></div>
+          </div>
+        </div>
+
+        <div class="sos" id="sos-card">
+          <div class="sos-t">Emergencia - Llama ahora</div>
+          <div class="sos-g">
+            <a class="sos-n" href="tel:132"><span class="sos-nn">132</span><span class="sos-nl">Bomberos</span></a>
+            <a class="sos-n" href="tel:133"><span class="sos-nn">133</span><span class="sos-nl">Carabineros</span></a>
+            <a class="sos-n" href="tel:131"><span class="sos-nn">131</span><span class="sos-nl">SAMU</span></a>
+            <a class="sos-n" href="tel:1404"><span class="sos-nn">1404</span><span class="sos-nl">SENAPRED</span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-info">
+        <div class="slbl" style="margin-bottom:10px">Temporada 2025-2026</div>
+        <div class="sg">
+          <div class="sc"><div class="sn cr">8.400</div><div class="sl">Incendios registrados</div></div>
+          <div class="sc"><div class="sn co">185.000</div><div class="sl">Hectareas afectadas</div></div>
+          <div class="sc"><div class="sn cb">14</div><div class="sl">Regiones en alerta</div></div>
+          <div class="sc"><div class="sn cg">68%</div><div class="sl">Controlados</div></div>
+        </div>
+        <div class="ib"><h4>Zonas de mayor riesgo</h4><ul>
+          <li>Valparaiso (cerros) - interfaz urbana critica</li>
+          <li>Biobio / Arauco - plantaciones forestales</li>
+          <li>La Araucania - bosque nativo mas viento</li>
+          <li>OHiggins - pastizales secos en verano</li>
+          <li>Maule - interfaz agricola-forestal</li>
+        </ul></div>
+        <div class="ib"><h4>Temporada por zona</h4><ul>
+          <li>Norte (I-IV): oct-dic, riesgo moderado</li>
+          <li>Centro (V-VII): dic-mar, riesgo ALTO</li>
+          <li>Sur (VIII-X): ene-mar, riesgo extremo</li>
+          <li>Viento Puelche: factor agravante clave</li>
+        </ul></div>
+        <div class="ib"><h4>Emergencias</h4><ul>
+          <li>Bomberos: 132 (gratuito, 24/7)</li>
+          <li>Carabineros: 133</li>
+          <li>SAMU: 131</li>
+          <li>CONAF incendios: 800 200 100</li>
+          <li>SENAPRED: 1404</li>
+        </ul></div>
+      </div>
+
+      <div class="panel" id="panel-guia">
+        <div class="ib"><h4>Protege tu hogar</h4><ul>
+          <li>Despeja 30m de vegetacion seca alrededor</li>
+          <li>Limpia canaletas y techo de hojas</li>
+          <li>Ten manguera lista y conectada</li>
+          <li>Conoce dos rutas de salida distintas</li>
+        </ul></div>
+        <div class="ib"><h4>Kit de emergencia (5 min)</h4><ul>
+          <li>Documentos en bolsa impermeable</li>
+          <li>Agua 3 litros por persona</li>
+          <li>Medicamentos para 5 dias</li>
+          <li>Linterna y radio a pilas</li>
+          <li>Ropa 3 dias mas dinero en efectivo</li>
+          <li>Cargador portatil para celular</li>
+        </ul></div>
+        <div class="ib"><h4>Evacua INMEDIATAMENTE si</h4><ul>
+          <li>Autoridades o bomberos lo ordenan</li>
+          <li>Ves llamas a menos de 500m</li>
+          <li>Humo impide respirar con normalidad</li>
+          <li>Se corta la electricidad de golpe</li>
+        </ul></div>
+        <div class="ib"><h4>Al evacuar recuerda</h4><ul>
+          <li>Baja hacia zonas planas o el mar</li>
+          <li>Evita quebradas, acumulan humo</li>
+          <li>Cierra puertas y ventanas al salir</li>
+          <li>No uses el auto si calles estan bloqueadas</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div id="map-error" style="display:none;position:absolute;inset:0;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:100">
+      <div style="font-size:2.5rem">🗺️</div>
+      <div style="font-weight:700;font-size:1rem">No se pudo cargar el mapa</div>
+      <div style="font-size:12px;color:var(--muted);text-align:center;max-width:260px;line-height:1.6">Verifica tu conexión a internet. El mapa requiere acceso a <b>unpkg.com</b> y <b>cartocdn.com</b>.</div>
+      <button onclick="location.reload()" style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">🔄 Reintentar</button>
+    </div>
+    <div class="sb-tog" id="sb-tog" onclick="toggleSidebar()">&#x203A;</div>
+    <div class="map-controls">
+      <button class="mc" id="mc-b" onclick="toggleL('bomb')" title="Cuarteles">&#x1F692;</button>
+      <button class="mc" id="mc-s" onclick="toggleL('safe')" title="Zonas seguras">&#x2705;</button>
+      <button class="mc" id="mc-r" onclick="toggleL('risk')" title="Zonas riesgo">&#x1F525;</button>
+      <button class="mc" onclick="map.setView([-35.5,-71.5],6)">&#x1F1E8;&#x1F1F1;</button>
+    </div>
+    <div class="map-legend">
+      <div class="ml-t">Leyenda</div>
+      <div class="ml-r"><div class="mld" style="background:#DC2626"></div>Riesgo alto/extremo</div>
+      <div class="ml-r"><div class="mld" style="background:#EA580C"></div>Riesgo moderado</div>
+      <div class="ml-r"><div class="mld" style="background:#16A34A"></div>Zona segura</div>
+      <div class="ml-r"><div class="mls" style="background:#DC2626"></div>Cuartel Bomberos</div>
+      <div class="ml-r"><div class="mls" style="background:#2563EB"></div>Tu ubicacion GPS</div>
+    </div>
+  </div>
+</div>
+
+<div class="fabs">
+  <button class="fab rfab" onclick="openRadio()">
+    <div class="sig"><span></span><span></span><span></span></div>Radio CB
+    <div class="nd" id="radio-nd"></div>
+  </button>
+  <button class="fab" onclick="openBot()">&#x1F916; Asistente</button>
+  <button class="fab" onclick="openInfo()">&#x2139;&#xFE0F;</button>
+</div>
+
+<div class="toast" id="toast">
+  <div class="t-ico">&#x1F4E1;</div>
+  <div class="t-txt"><p id="t-title">Aviso</p><span id="t-body">-</span></div>
+  <button class="t-x" onclick="closeToast()">&#x2715;</button>
+</div>
+
+<div class="mbg" id="bot-bg" onclick="if(event.target===this)closeBot()">
+  <div class="bot-m">
+    <div class="bot-head">
+      <div class="bot-av">&#x1F916;</div>
+      <div class="bot-hi"><h3>Asistente AlertaFuego</h3><p>Experto en incendios Chile</p></div>
+      <button class="bot-x" onclick="closeBot()">&#x2715;</button>
+    </div>
+    <div class="bot-qs">
+      <button class="bq" onclick="bask('Zonas con mas riesgo de incendio en Chile')">Zonas peligrosas</button>
+      <button class="bq" onclick="bask('Que hago si veo fuego o humo cerca')">Veo fuego</button>
+      <button class="bq" onclick="bask('Como protejo mi casa del fuego')">Proteger casa</button>
+      <button class="bq" onclick="bask('Que es el viento Puelche')">Viento Puelche</button>
+      <button class="bq" onclick="bask('Que llevo en el kit de emergencia')">Kit emergencia</button>
+      <button class="bq" onclick="bask('Como evacuo de forma segura')">Evacuar</button>
+    </div>
+    <div class="bot-msgs" id="bot-msgs">
+      <div class="bm bb">Hola. Soy el asistente AlertaFuego para Chile. Puedo orientarte sobre zonas de riesgo, que hacer en emergencias, como proteger tu hogar y mas. En que te ayudo?</div>
+    </div>
+    <div class="bot-inr">
+      <input type="text" id="bot-in" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')bsend()">
+      <button class="bot-send" onclick="bsend()"><svg viewBox="0 0 24 24"><path d="M2 12L22 2L12 22L10 13Z"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<div class="mbg" id="rad-bg" onclick="if(event.target===this)closeRadio()">
+  <div class="rad-m">
+    <div class="rad-head">
+      <div class="rad-top">
+        <div class="rad-title">RADIO BOMBEROS CHILE</div>
+        <button class="rad-x" onclick="closeRadio()">&#x2715;</button>
+      </div>
+      <div class="rad-meta">Simulacion canal operaciones - Prototipo AlertaFuego</div>
+    </div>
+    <div class="notif-row">
+      <span class="notif-lbl">Notificaciones de alerta</span>
+      <label class="tsw">
+        <input type="checkbox" id="notif-chk" checked onchange="notifsOn=this.checked">
+        <div class="ttrack"></div>
+        <div class="tthumb"></div>
+      </label>
+    </div>
+    <div class="rad-player">
+      <p>Radio Bomberos Chile oficial 107.5 FM - Stream en vivo</p>
+      <button class="play-btn" onclick="window.open('https://www.bomberos.cl/online/radio/','_blank')">&#x25B6; En vivo</button>
+    </div>
+    <div class="rad-feed" id="rad-feed"></div>
+  </div>
+</div>
+
+<div class="mbg" id="info-bg" onclick="if(event.target===this)closeInfo()">
+  <div class="info-m">
+    <div class="info-head">
+      <h3>Acerca de AlertaFuego</h3>
+      <button class="info-x" onclick="closeInfo()">&#x2715;</button>
+    </div>
+    <div class="info-body">
+      <div class="info-an">AlertaFuego Chile v1.0</div>
+      <div class="info-desc">Sistema de visualizacion de riesgo de incendios con datos meteorologicos en tiempo real para Chile. Combina condiciones climaticas actuales, zonas historicas de riesgo y recursos de emergencia para ayudar a la ciudadania.</div>
+      <div class="info-tl">Equipo de desarrollo</div>
+      <div class="team-list">
+        <div class="tm"><div class="tm-av" style="background:#FEF2F2">&#x1F9D1;&#x200D;&#x1F4BB;&#x1F468;&#x200D;&#x1F527;</div><div><div class="tm-name">Benjamin Caceres</div><div class="tm-role">Desarrollo, Dise&#xF1;o, Idea y Testing</div></div></div>
+        <div class="tm"><div class="tm-av" style="background:#EFF6FF">&#x1F468;&#x200D;&#x1F4BB;</div><div><div class="tm-name">Gian Saavedra</div><div class="tm-role">Testing y Dise&#xF1;o</div></div></div>
+        <div class="tm"><div class="tm-av" style="background:#F0FDF4">&#x1F468;&#x200D;&#x1F4BB;</div><div><div class="tm-name">Tomas Orellana</div><div class="tm-role">Desarrollo y Idea</div></div></div>
+        <div class="tm"><div class="tm-av" style="background:#FFF7ED">&#x1F468;&#x200D;&#x1F4BB;</div><div><div class="tm-name">Sebastian Zuniga</div><div class="tm-role">Informaci&#xF3;n y Testing</div></div></div>
+        <div class="tm"><div class="tm-av" style="background:#F5F3FF">&#x1F468;&#x200D;&#x1F4BB;</div><div><div class="tm-name">Martin Vega</div><div class="tm-role">Idea y Dise&#xF1;o</div></div></div>
+      </div>
+      <div class="info-inst">
+        <div class="info-inst-ico">&#x1F393;</div>
+        <div><div class="info-inst-name">DuocUC Valparaiso</div><div class="info-inst-sub">Ingenieria en Informatica</div></div>
+      </div>
+      <div class="info-ver">AlertaFuego 2026 - Prototipo academico</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// THEME
+var dark=false;
+function toggleDark(){
+  dark=!dark;
+  document.body.classList.toggle('dark',dark);
+  document.getElementById('theme-btn').innerHTML=dark?'&#x2600;&#xFE0F;':'&#x1F319;';
+  map.eachLayer(function(l){if(l._url)map.removeLayer(l);});
+  L.tileLayer(dark?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
+}
+
+// MAP
+var map;
+try {
+  map=L.map('map',{zoomControl:true}).setView([-35.5,-71.5],6);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
+} catch(e) {
+  document.getElementById('map-error').style.display='flex';
+  document.getElementById('map').style.display='none';
+  console.error('Map error:', e);
+}
+
+function mkIco(e,bg){return L.divIcon({html:'<div style="background:'+bg+';border:2px solid white;border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.28)">'+e+'</div>',iconSize:[28,28],iconAnchor:[14,14],className:''});}
+function uIco(){return L.divIcon({html:'<div style="background:#2563EB;border:3px solid white;border-radius:50%;width:20px;height:20px;box-shadow:0 0 0 5px rgba(37,99,235,.22)"></div>',iconSize:[20,20],iconAnchor:[10,10],className:''});}
+
+var lBomb=L.layerGroup(),lSafe=L.layerGroup(),lRisk=L.layerGroup();
+var lVis={bomb:true,safe:true,risk:true};
+var uMark=null;
+
+var bomberos=[
+  {n:'1a Cia. Valparaiso',lat:-33.048,lng:-71.620},{n:'2a Cia. Alemania',lat:-33.044,lng:-71.627},
+  {n:'3a Cia. Valparaiso N3',lat:-33.052,lng:-71.610},{n:'4a Cia. Union',lat:-33.050,lng:-71.598},
+  {n:'5a Cia. Italia',lat:-33.038,lng:-71.596},{n:'6a Cia. Iris',lat:-33.043,lng:-71.612},
+  {n:'7a Cia. Francesa',lat:-33.046,lng:-71.605},{n:'8a Cia. Espana',lat:-33.051,lng:-71.589},
+  {n:'9a Cia. Providencia',lat:-33.036,lng:-71.606},{n:'10a Cia.',lat:-33.042,lng:-71.583},
+  {n:'11a Cia. Porta Coeli',lat:-33.032,lng:-71.575},{n:'12a Cia. Cosaco',lat:-33.055,lng:-71.595},
+  {n:'1a Cia. Vina del Mar',lat:-33.0248,lng:-71.5518},{n:'2a Cia. Vina del Mar',lat:-33.031,lng:-71.540},
+  {n:'3a Cia. Vina del Mar',lat:-33.018,lng:-71.562},{n:'1a Cia. Santiago',lat:-33.457,lng:-70.648},
+  {n:'Cia. Providencia',lat:-33.423,lng:-70.619},{n:'Cia. Las Condes',lat:-33.410,lng:-70.574},
+  {n:'Cia. Maipú',lat:-33.512,lng:-70.764},{n:'Cia. La Florida',lat:-33.517,lng:-70.587},
+  {n:'Cia. Pudahuel',lat:-33.448,lng:-70.761},{n:'Cia. Quilicura',lat:-33.363,lng:-70.736},
+  {n:'1a Cia. Concepcion',lat:-36.820,lng:-73.044},{n:'2a Cia. Concepcion',lat:-36.834,lng:-73.050},
+  {n:'Cia. Talcahuano',lat:-36.717,lng:-73.113},{n:'1a Cia. Temuco',lat:-38.736,lng:-72.590},
+  {n:'2a Cia. Temuco',lat:-38.745,lng:-72.600},{n:'Cia. Antofagasta',lat:-23.651,lng:-70.398},
+  {n:'Cia. Iquique',lat:-20.221,lng:-70.143},{n:'Cia. Puerto Montt',lat:-41.469,lng:-72.942},
+  {n:'Cia. La Serena',lat:-29.903,lng:-71.252},{n:'Cia. Rancagua',lat:-34.170,lng:-70.744},
+  {n:'Cia. Talca',lat:-35.426,lng:-71.655},{n:'Cia. Chillan',lat:-36.606,lng:-72.104},
+  {n:'Cia. Valdivia',lat:-39.820,lng:-73.245},{n:'Cia. Osorno',lat:-40.574,lng:-73.133},
+  {n:'Cia. Arica',lat:-18.478,lng:-70.313},{n:'Cia. Punta Arenas',lat:-53.164,lng:-70.917},
+];
+bomberos.forEach(function(b){L.marker([b.lat,b.lng],{icon:mkIco('&#x1F692;','#DC2626')}).bindPopup('<b>'+b.n+'</b><br><small>Cuerpo de Bomberos de Chile</small>').addTo(lBomb);});
+
+var safePts=[
+  {n:'Estadio Nacional',lat:-33.466,lng:-70.609,i:'Santiago'},{n:'Parque OHiggins',lat:-33.471,lng:-70.656,i:'Santiago'},
+  {n:'Estadio Municipal Valparaiso',lat:-33.052,lng:-71.608,i:'Valparaiso'},{n:'Plaza Anibal Pinto',lat:-33.048,lng:-71.616,i:'Valparaiso'},
+  {n:'Estadio Municipal Concepcion',lat:-36.826,lng:-73.050,i:'Concepcion'},{n:'Estadio Temuco',lat:-38.741,lng:-72.599,i:'Temuco'},
+];
+safePts.forEach(function(s){L.marker([s.lat,s.lng],{icon:mkIco('&#x2705;','#16A34A')}).bindPopup('<b>Punto de encuentro</b><br><b>'+s.n+'</b><br><small>'+s.i+'</small>').addTo(lSafe);});
+
+lBomb.addTo(map); lSafe.addTo(map);
+
+function toggleL(k){
+  lVis[k]=!lVis[k];
+  var layers={bomb:lBomb,safe:lSafe,risk:lRisk};
+  lVis[k]?layers[k].addTo(map):map.removeLayer(layers[k]);
+  var ids={bomb:'mc-b',safe:'mc-s',risk:'mc-r'};
+  document.getElementById(ids[k]).classList.toggle('off',!lVis[k]);
+}
+
+var RC={high:'#DC2626',med:'#EA580C',low:'#16A34A'};
+var ZONES={
+  vp_baron:{name:'Cerro Baron - Valparaiso',risk:'high',badge:'RIESGO EXTREMO',lat:-33.037,lng:-71.591,r:450,desc:'Construcciones de madera en callejones muy angostos. Dificil acceso para bomberos. Historico de incendios recurrentes.',veg:'Alta',pend:'Quebradas pronunciadas',acc:'Muy limitado',temp:'Dic-Mar'},
+  vp_rodelillo:{name:'Cerro Rodelillo - Valparaiso',risk:'high',badge:'RIESGO EXTREMO',lat:-33.030,lng:-71.569,r:620,desc:'Interfaz urbano-forestal critica. Grandes pastizales secos. Viento Puelche lo hace extremadamente peligroso.',veg:'Muy alta',pend:'Cerros con quebradas',acc:'Muy limitado',temp:'Dic-Mar'},
+  vp_alegre:{name:'Cerro Alegre - Valparaiso',risk:'high',badge:'RIESGO ALTO',lat:-33.043,lng:-71.627,r:420,desc:'Zona patrimonial con viviendas historicas de madera. Calles angostas dificultan la llegada de carros bomba.',veg:'Moderada',pend:'Pronunciada',acc:'Muy limitado',temp:'Dic-Mar'},
+  santiago:{name:'Borde Cordillerano - Santiago RM',risk:'med',badge:'RIESGO MODERADO',lat:-33.456,lng:-70.648,r:3000,desc:'Riesgo moderado en zonas de piedemonte. Los cerros al oriente de Santiago pueden afectar sectores residenciales.',veg:'Matorral estacional',pend:'Borde cordillerano',acc:'Variable',temp:'Nov-Feb'},
+  concepcion:{name:'Region del Biobio - Concepcion',risk:'high',badge:'RIESGO ALTO',lat:-36.820,lng:-73.044,r:8000,desc:'Grandes plantaciones de pino y eucalipto que arden con extrema intensidad. Temporada critica prolongada.',veg:'Plantaciones forestales',pend:'Variable',acc:'Limitado en ruralidad',temp:'Dic-Mar'},
+  temuco:{name:'Temuco - La Araucania',risk:'high',badge:'RIESGO ALTO',lat:-38.736,lng:-72.590,r:6000,desc:'Zona con bosque nativo y plantaciones. El viento y la sequia estival generan condiciones extremas.',veg:'Bosque nativo y plantaciones',pend:'Variable montanosa',acc:'Limitado en ruralidad',temp:'Ene-Mar'},
+  vina:{name:'Vina del Mar - V Region',risk:'med',badge:'RIESGO MODERADO',lat:-33.025,lng:-71.552,r:2000,desc:'Los cerros y quebradas perifericas son vulnerables en verano. Afectada en los incendios de 2024.',veg:'Moderada',pend:'Cerros costeros',acc:'Moderado',temp:'Dic-Mar'},
+  serena:{name:'La Serena - Coquimbo',risk:'med',badge:'RIESGO MODERADO',lat:-29.903,lng:-71.252,r:4000,desc:'Clima semiarido. En anos lluviosos la vegetacion crece y en verano se convierte en combustible.',veg:'Matorral xerofitico',pend:'Valle y costa',acc:'Moderado',temp:'Oct-Feb'},
+  pucon:{name:'Pucon - La Araucania',risk:'high',badge:'RIESGO ALTO',lat:-39.272,lng:-71.978,r:5000,desc:'Interfaz con bosque valdiviano denso. En anos secos el riesgo es alto. Cerca del Parque Nacional Villarrica.',veg:'Bosque valdiviano',pend:'Volcanica montanosa',acc:'Limitado',temp:'Ene-Mar'},
+  santaolga:{name:'Santa Olga - Maule',risk:'high',badge:'RIESGO EXTREMO',lat:-35.800,lng:-71.600,r:5000,desc:'Localidad destruida completamente en 2017. Zona de plantaciones forestales. Simbolo de los megaincendios en Chile.',veg:'Plantaciones pino/eucalipto',pend:'Ondulado',acc:'Limitado',temp:'Dic-Mar'},
+};
+
+function showZone(key){
+  var z=ZONES[key]; if(!z)return;
+  lRisk.clearLayers();
+  var col=RC[z.risk];
+  L.circle([z.lat,z.lng],{radius:z.r,color:col,weight:2,fillColor:col,fillOpacity:.15}).addTo(lRisk);
+  L.marker([z.lat,z.lng],{icon:L.divIcon({html:'<div style="background:'+col+';color:white;padding:4px 11px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.22)">'+z.badge+'</div>',className:'',iconAnchor:[0,0]})}).addTo(lRisk);
+  if(lVis.risk)lRisk.addTo(map);
+  var zoom=z.r>5000?9:z.r>2000?11:13;
+  map.setView([z.lat,z.lng],zoom,{animate:true});
+  var c=document.getElementById('result-card');
+  c.className='result '+(z.risk==='high'?'rh':z.risk==='med'?'rm':'rl')+' show';
+  document.getElementById('r-name').textContent=z.name;
+  document.getElementById('r-badge').textContent=z.badge;
+  document.getElementById('r-desc').textContent=z.desc;
+  document.getElementById('r-veg').textContent=z.veg;
+  document.getElementById('r-pend').textContent=z.pend;
+  document.getElementById('r-acc').textContent=z.acc;
+  document.getElementById('r-temp').textContent=z.temp;
+  document.getElementById('sos-card').className='sos'+(z.risk==='high'?' show':'');
+}
+
+function lz(k){document.getElementById('addr-in').value=ZONES[k]?ZONES[k].name:k;showZone(k);showPanel('buscar');}
+
+function doSearch(){
+  var v=document.getElementById('addr-in').value.trim().toLowerCase();
+  for(var k in ZONES){if(v.includes(k)||ZONES[k].name.toLowerCase().includes(v)){showZone(k);return;}}
+  fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(v+' Chile')+'&format=json&limit=1')
+    .then(function(r){return r.json();}).then(function(d){
+      if(d&&d[0]){
+        var la=parseFloat(d[0].lat),ln=parseFloat(d[0].lon);
+        map.setView([la,ln],12,{animate:true});
+        if(uMark)map.removeLayer(uMark);
+        uMark=L.marker([la,ln],{icon:uIco()}).bindPopup('<b>'+d[0].display_name.split(',')[0]+'</b>').addTo(map);
+        var rsk=estRisk(la,ln);
+        var c=document.getElementById('result-card');
+        c.className='result '+(rsk==='high'?'rh':'rm')+' show';
+        document.getElementById('r-name').textContent=d[0].display_name.split(',').slice(0,2).join(', ');
+        document.getElementById('r-badge').textContent=rsk==='high'?'RIESGO ALTO (estimado)':'RIESGO MODERADO (estimado)';
+        document.getElementById('r-desc').textContent='Estimacion basada en la ubicacion. Consulta SENAPRED (1404) o CONAF (800 200 100) para datos precisos.';
+        ['r-veg','r-pend','r-acc','r-temp'].forEach(function(id){document.getElementById(id).textContent='Variable';});
+        document.getElementById('sos-card').className='sos'+(rsk==='high'?' show':'');
+      }
+    }).catch(function(){});
+}
+
+function estRisk(lat,lng){
+  if(lat<-35&&lat>-42)return'high';
+  if(lat<-33&&lat>-35)return'high';
+  return'med';
+}
+
+// SIDEBAR
+var sbOpen=true;
+function toggleSidebar(){
+  sbOpen=!sbOpen;
+  document.getElementById('sidebar').classList.toggle('collapsed',!sbOpen);
+  document.getElementById('sb-tog').innerHTML=sbOpen?'&#x2039;':'&#x203A;';
+  setTimeout(function(){map.invalidateSize();},310);
+}
+function showPanel(name){
+  document.querySelectorAll('.stab').forEach(function(t){t.classList.toggle('on',t.dataset.p===name);});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.toggle('on',p.id==='panel-'+name);});
+}
+document.querySelectorAll('.stab').forEach(function(t){t.addEventListener('click',function(){showPanel(t.dataset.p);});});
+
+// RISKOMETER
+async function loadRom(lat,lng){
+  try{
+    var url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lng+'&current=temperature_2m,relative_humidity_2m,wind_speed_10m&wind_speed_unit=kmh&timezone=America%2FSantiago';
+    var res=await fetch(url);
+    var d=await res.json();
+    var cur=d.current;
+    var temp=Math.round(cur.temperature_2m),hum=Math.round(cur.relative_humidity_2m),wind=Math.round(cur.wind_speed_10m);
+    var score=0;
+    score+=(temp>35?40:temp>28?28:temp>20?15:5);
+    score+=(hum<20?35:hum<35?22:hum<50?12:3);
+    score+=(wind>50?25:wind>30?15:wind>15?8:2);
+    score=Math.min(100,Math.round(score));
+    var col=score>=70?'#DC2626':score>=45?'#EA580C':'#16A34A';
+    var lvl=score>=70?'RIESGO ALTO':score>=45?'RIESGO MODERADO':'RIESGO BAJO';
+    document.getElementById('rom-loading').style.display='none';
+    document.getElementById('rom-data').style.display='block';
+    document.getElementById('rom-score').textContent=score;
+    document.getElementById('rom-score').style.color=col;
+    document.getElementById('rom-badge').textContent=lvl;
+    document.getElementById('rom-badge').style.color=col;
+    document.getElementById('rom-bar').style.width=score+'%';
+    document.getElementById('rf-t').textContent=temp+'C';
+    document.getElementById('rf-h').textContent=hum+'%';
+    document.getElementById('rf-w').textContent=wind+' km/h';
+    var now=new Date();
+    document.getElementById('rom-upd').textContent='Actualizado: '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+  }catch(e){document.getElementById('rom-loading').textContent='No se pudieron cargar los datos climaticos.';}
+}
+loadRom(-33.45,-70.65);
+
+// GPS
+var gpsText='';
+function getGPS(){
+  if(!navigator.geolocation){alert('Tu navegador no soporta geolocalizacion.');return;}
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var la=pos.coords.latitude,ln=pos.coords.longitude;
+    gpsText='Lat: '+la.toFixed(5)+', Lng: '+ln.toFixed(5);
+    document.getElementById('gps-coords').textContent=gpsText;
+    document.getElementById('gps-res').classList.add('show');
+    if(uMark)map.removeLayer(uMark);
+    uMark=L.marker([la,ln],{icon:uIco()}).bindPopup('<b>Tu ubicacion GPS</b><br><small>'+gpsText+'</small>').addTo(map);
+    map.setView([la,ln],14,{animate:true});
+    loadRom(la,ln);
+    var rsk=estRisk(la,ln);
+    var rtag=document.getElementById('gps-rtag');
+    rtag.style.display='inline-flex';
+    if(rsk==='high'){rtag.style.cssText='display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:10px;border:1px solid #FECACA;background:#FEF2F2;color:#991B1B';}
+    else{rtag.style.cssText='display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:10px;border:1px solid #FED7AA;background:#FFF7ED;color:#9A3412';}
+    rtag.textContent=rsk==='high'?'Zona de alto riesgo estimado':'Riesgo moderado estimado';
+    lRisk.clearLayers();
+    var col=RC[rsk];
+    L.circle([la,ln],{radius:500,color:col,weight:2,fillColor:col,fillOpacity:.13}).addTo(lRisk);
+    if(lVis.risk)lRisk.addTo(map);
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+la+'&lon='+ln+'&format=json')
+      .then(function(r){return r.json();}).then(function(data){
+        var short=data.display_name.split(',').slice(0,3).join(', ');
+        document.getElementById('gps-addr').textContent=short;
+        gpsText=gpsText+' - '+short;
+      }).catch(function(){});
+  },function(){alert('No se pudo obtener tu ubicacion. Permite el acceso en tu navegador.');});
+}
+function copyGPS(){
+  var txt='Mi ubicacion de emergencia:\n'+gpsText+'\n\nBomberos: 132\nSAMU: 131\nCarabineros: 133';
+  navigator.clipboard.writeText(txt).then(function(){alert('Copiado. Comparte con Bomberos (132).');}).catch(function(){prompt('Copia este texto:',txt);});
+}
+
+// BOT
+var KB=[
+  {k:['riesgo','peligrosa','zonas','peligro','peor'],r:'Las zonas de mayor riesgo en Chile son:\n\nExtremO:\n- Cerros de Valparaiso (Rodelillo, Las Canas, Baron)\n- Biobio / Arauco: plantaciones forestales\n- Maule: Santa Olga y zonas rurales\n\nAlto:\n- La Araucania: bosque nativo\n- OHiggins rural\n- Borde cordillerano Santiago\n\nEl factor mas peligroso: vegetacion seca + viento Puelche + acceso limitado.'},
+  {k:['hago','veo fuego','veo humo','humo','llamas','que hacer','incendio cerca','socorro'],r:'Si ves fuego o humo:\n\n1. Llama al 132 (Bomberos) AHORA. Da tu direccion exacta.\n2. Avisa a vecinos, especialmente adultos mayores.\n3. Si el fuego esta a menos de 500m, evacua inmediatamente.\n4. Toma solo tu kit. Cierra puertas y ventanas al salir.\n5. Baja hacia zonas planas, alejandote del fuego.\n\nEl fuego en cerros puede crecer en segundos con viento.'},
+  {k:['protejo','proteger','casa','hogar','prevenir'],r:'Para proteger tu hogar:\n\n- Despeja 30m de vegetacion seca alrededor\n- Limpia canaletas y techos de hojas\n- Ten manguera conectada y lista\n- Revisa la instalacion electrica\n- Organizate con vecinos\n- Practica dos rutas de evacuacion con tu familia'},
+  {k:['puelche','viento'],r:'El viento Puelche es el factor mas peligroso en Chile central.\n\nViene del este, baja seco y calido desde los Andes y puede superar 60 km/h. Cuando sopla:\n- Humedad del aire baja al minimo\n- Fuego puede avanzar 5+ km/h\n- Zonas enteras pueden arder en minutos\n\nFue clave en Valparaiso 2014 (3.000 casas) y en los megaincendios de 2024.'},
+  {k:['2014','2017','2024','historia','catastrofe','megaincendio'],r:'Peores incendios de Chile:\n\n2014: Valparaiso, 15 cerros, 3.000 viviendas, 15 fallecidos.\n2017: Zona central, Santa Olga destruida, 500.000 ha quemadas.\n2024: Region de Valparaiso, 130+ fallecidos en una noche. Peor incendio urbano de la historia chilena.'},
+  {k:['kit','mochila','llevar','que llevo'],r:'Kit de emergencia (listo en 5 min):\n\n- Documentos en bolsa impermeable\n- 3 litros de agua por persona\n- Medicamentos para 5 dias\n- Linterna con pilas\n- Radio a pilas\n- Ropa para 3 dias\n- Dinero en efectivo\n- Cargador portatil'},
+  {k:['evacuar','rutas','salida','escape','punto encuentro'],r:'Para evacuar de forma segura:\n\n- Baja hacia zonas planas o la costa\n- Evita quebradas: acumulan humo\n- Busca espacio abierto sin vegetacion si no puedes bajar\n- No uses el auto si calles estan bloqueadas\n\nPuntos de encuentro: Estadio Municipal de tu ciudad, plazas y parques principales.'},
+  {k:['bomberos','cuartel','voluntario','132'],r:'El Cuerpo de Bomberos de Chile tiene mas de 400 cuerpos voluntarios a nivel nacional.\n\nPara forestales actuan tambien:\n- CONAF: brigadas y aeronaves\n- FACH: helicopteros de apoyo\n- SENAPRED: coordinacion nacional\n\nBomberos: 132 (gratuito, 24/7)\nCONAF forestales: 800 200 100'},
+  {k:['riskometro','indice','puntaje','calcula','como funciona'],r:'El Riskometro es la caracteristica exclusiva de AlertaFuego.\n\nCalcula el indice de riesgo de incendio de HOY usando datos meteorologicos reales (API Open-Meteo):\n\n- Temperatura actual: a mayor temperatura, mayor riesgo\n- Humedad relativa: menos humedad es mas peligro\n- Velocidad del viento: vientos altos propagan el fuego\n\nLa formula pondera estos tres factores y entrega un puntaje de 0 a 100. Ninguna otra app en Chile hace esto en tiempo real para el ciudadano.'},
+  {k:['numeros','telefono','llamar','emergencias'],r:'Numeros de emergencia Chile:\n\n132: Bomberos (gratuito, 24/7)\n133: Carabineros\n131: SAMU\n800 200 100: CONAF (gratuito)\n1404: SENAPRED\n\nAl llamar al 132 di: ciudad y sector, calle y numero, referencia cercana, que esta ardiendo.'},
+];
+function botReply(msg){
+  var q=msg.toLowerCase();
+  var best=null,score=0;
+  KB.forEach(function(e){
+    var s=0;
+    e.k.forEach(function(k){if(q.includes(k))s+=3;});
+    if(s>score){score=s;best=e;}
+  });
+  return(best&&score>0)?best.r:'Puedo ayudarte con:\n- Zonas de riesgo en Chile\n- Que hacer ante un incendio\n- Como proteger tu hogar\n- Kit de emergencia\n- Evacuacion segura\n- Numeros de emergencia\n- Historia de grandes incendios\n- Como funciona el Riskometro\n\nEscribe tu pregunta.';
+}
+function addBM(txt,t){var c=document.getElementById('bot-msgs');var d=document.createElement('div');d.className='bm b'+t;d.style.whiteSpace='pre-line';d.textContent=txt;c.appendChild(d);c.scrollTop=c.scrollHeight;}
+function bask(q){document.getElementById('bot-in').value=q;bsend();}
+function bsend(){var inp=document.getElementById('bot-in');var msg=inp.value.trim();if(!msg)return;inp.value='';addBM(msg,'u');setTimeout(function(){addBM(botReply(msg),'b');},350+Math.random()*200);}
+
+// RADIO
+var notifsOn=true;
+var RADIO=[
+  {t:'07:42',c:'CLAVE 10',lvl:'alert',r:'Valparaiso',txt:'Central VLP para 2a y 5a Cia: INCENDIO ESTRUCTURAL Cerro Baron, pasaje Mesia 2240. Carro 1 y Escalera 3 despachados. ETA 4 min.'},
+  {t:'07:43',c:'CLAVE 30',lvl:'normal',r:'Valparaiso',txt:'5a Cia confirmando: En ruta por Von Schroeders. Aviso a 9a Cia refuerzo.'},
+  {t:'07:51',c:'AVISO',lvl:'normal',r:'Valparaiso',txt:'Jefe de guardia en escena Cerro Baron: Fuego controlado primer piso. Riesgo propagacion a colindante. Solicitando apoyo hidrico.'},
+  {t:'08:02',c:'CLAVE 8',lvl:'normal',r:'Valparaiso',txt:'2a Cia reporta: Incendio bajo control. Sin victimas confirmadas.'},
+  {t:'08:14',c:'AVISO',lvl:'alert',r:'Nacional',txt:'SENAPRED: Alerta temprana regiones V, VI, VII y RM. Viento Puelche 45 km/h a las 15:00 hrs. Companias en alerta preventiva.'},
+  {t:'08:31',c:'CLAVE 10',lvl:'alert',r:'Biobio',txt:'Central Concepcion para 1a y 2a Cia: INCENDIO FORESTAL sector Los Pinos, camino Coronel. CONAF coordinando. Protocolo Forestal activado.'},
+  {t:'08:50',c:'AVISO',lvl:'normal',r:'Biobio',txt:'CONAF Biobio: Superficie comprometida 8 ha. Brigada terrestre activa.'},
+  {t:'09:05',c:'[krrsh]',lvl:'static',r:'',txt:'..........'},
+  {t:'09:18',c:'CLAVE 10',lvl:'alert',r:'RM',txt:'Central Santiago para Cias Las Condes y La Florida: INCENDIO FORESTAL cerro El Manzano. Helicoptero CONAF en camino.'},
+  {t:'09:22',c:'CLAVE 5',lvl:'alert',r:'RM',txt:'EVACUACION PREVENTIVA sector Los Trapenses, Lo Barnechea. Rutas habilitadas Camino El Alerce y ruta G-21.'},
+  {t:'09:50',c:'CLAVE 8',lvl:'normal',r:'RM',txt:'Cia Las Condes: Controlado. 4 ha. Sin victimas.'},
+  {t:'10:03',c:'AVISO',lvl:'alert',r:'Nacional',txt:'CONAF: Puelche 52 km/h cerros Valparaiso. Humedad 18%. CONDICION ROJA. Companias V Region en alerta maxima.'},
+  {t:'10:15',c:'CLAVE 10',lvl:'alert',r:'Valparaiso',txt:'INCENDIO ESTRUCTURAL Cerro Alegre, Templeman 682. 2a y 6a Cia en camino.'},
+  {t:'10:38',c:'CLAVE 8',lvl:'normal',r:'Valparaiso',txt:'Cias 2a y 6a: Controlado Cerro Alegre. Sin lesionados. Retiro gradual.'},
+  {t:'10:55',c:'AVISO',lvl:'normal',r:'Nacional',txt:'SENAPRED: 3 incendios activos en el pais, todos con control en progreso. Nivel NARANJA vigente.'},
+  {t:'11:10',c:'CLAVE 10',lvl:'alert',r:'Maule',txt:'Central Talca para Cias 1a y 3a: INCENDIO FORESTAL sector Forel, ruta K-55. Brigada CONAF coordinando.'},
+  {t:'11:25',c:'[krrsh]',lvl:'static',r:'',txt:'..........'},
+  {t:'11:40',c:'AVISO',lvl:'normal',r:'Araucania',txt:'CONAF Araucania: Sin focos activos en Pucon. Brigadas en patrullaje Parque Villarrica.'},
+];
+var radIdx=0,radTimer=null;
+function openRadio(){
+  document.getElementById('rad-bg').classList.add('open');
+  document.getElementById('radio-nd').classList.remove('show');
+  var feed=document.getElementById('rad-feed');
+  feed.innerHTML='';radIdx=0;
+  addRadio(5);
+  if(radTimer)clearInterval(radTimer);
+  radTimer=setInterval(function(){addRadio(1);},4200);
+}
+function addRadio(n){
+  n=n||1;
+  var feed=document.getElementById('rad-feed');
+  var isOpen=document.getElementById('rad-bg').classList.contains('open');
+  for(var i=0;i<n;i++){
+    var m=RADIO[radIdx%RADIO.length];radIdx++;
+    if(isOpen){
+      var d=document.createElement('div');
+      d.className='re re-'+m.lvl;
+      var ts=m.t?'<span class="re-time">['+m.t+']</span> ':'';
+      var rs=m.r?'<span class="re-region">['+m.r+']</span> ':'';
+      d.innerHTML=ts+rs+'<span class="re-code">'+m.c+'</span> <span class="re-txt">'+m.txt+'</span>';
+      feed.appendChild(d);feed.scrollTop=feed.scrollHeight;
+    } else if(m.lvl==='alert'&&notifsOn){
+      document.getElementById('radio-nd').classList.add('show');
+      showToast(m.c,'['+m.r+'] '+m.txt.slice(0,65)+'...');
+    }
+  }
+}
+function closeRadio(){document.getElementById('rad-bg').classList.remove('open');clearInterval(radTimer);radTimer=null;}
+function openBot(){document.getElementById('bot-bg').classList.add('open');}
+function closeBot(){document.getElementById('bot-bg').classList.remove('open');}
+function openInfo(){document.getElementById('info-bg').classList.add('open');}
+function closeInfo(){document.getElementById('info-bg').classList.remove('open');}
+
+var toastT=null;
+function showToast(title,body){
+  if(!notifsOn)return;
+  document.getElementById('t-title').textContent=title;
+  document.getElementById('t-body').textContent=body;
+  document.getElementById('toast').classList.add('show');
+  if(toastT)clearTimeout(toastT);
+  toastT=setTimeout(closeToast,7000);
+}
+function closeToast(){document.getElementById('toast').classList.remove('show');}
+
+setInterval(function(){
+  if(!document.getElementById('rad-bg').classList.contains('open')){
+    var alerts=RADIO.filter(function(m){return m.lvl==='alert';});
+    var m=alerts[Math.floor(Math.random()*alerts.length)];
+    document.getElementById('radio-nd').classList.add('show');
+    showToast(m.c,'['+m.r+'] '+m.txt.slice(0,65)+'...');
+  }
+},50000);
+
+setTimeout(function(){
+  showToast('CLAVE 8','[Valparaiso] Incendio bajo control en Cerro Baron. Sin victimas.');
+  document.getElementById('radio-nd').classList.add('show');
+},12000);
+</script>
+</body>
+</html>
