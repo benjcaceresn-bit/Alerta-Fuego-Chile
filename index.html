@@ -2,15 +2,25 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>AlertaFuego Chile</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--red:#DC2626;--orange:#EA580C;--green:#16A34A;--blue:#2563EB;--bg:#EEF0F5;--card:#fff;--card2:#F4F5F8;--border:#E2E5EB;--text:#111827;--muted:#6B7280;--dim:#B0B7C3;--sh:0 1px 4px rgba(0,0,0,.08);--sh-md:0 4px 16px rgba(0,0,0,.10);--sh-lg:0 16px 48px rgba(0,0,0,.14);--r:13px}
-body.dark{--bg:#0B0D14;--card:#161928;--card2:#1E2235;--border:rgba(255,255,255,.08);--text:#F1F2F6;--muted:#8B92A5;--dim:#3D4357;--sh:0 1px 4px rgba(0,0,0,.5);--sh-md:0 4px 16px rgba(0,0,0,.5);--sh-lg:0 16px 48px rgba(0,0,0,.7)}
+:root{
+  --red:#DC2626;--orange:#EA580C;--green:#16A34A;--blue:#2563EB;
+  --bg:#EEF0F5;--card:#fff;--card2:#F4F5F8;--border:#E2E5EB;
+  --text:#111827;--muted:#6B7280;--dim:#B0B7C3;
+  --sh:0 1px 4px rgba(0,0,0,.08);--sh-md:0 4px 16px rgba(0,0,0,.10);--sh-lg:0 16px 48px rgba(0,0,0,.14);
+  --r:13px;--sb-w:400px;
+}
+body.dark{
+  --bg:#0B0D14;--card:#161928;--card2:#1E2235;--border:rgba(255,255,255,.08);
+  --text:#F1F2F6;--muted:#8B92A5;--dim:#3D4357;
+  --sh:0 1px 4px rgba(0,0,0,.5);--sh-md:0 4px 16px rgba(0,0,0,.5);--sh-lg:0 16px 48px rgba(0,0,0,.7);
+}
 html,body{height:100%;overflow:hidden}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;transition:background .25s,color .25s}
 ::-webkit-scrollbar{width:7px;height:7px}
@@ -25,14 +35,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 .logo-name{font-size:1rem;font-weight:800;letter-spacing:-.03em}
 .logo-name em{color:var(--red);font-style:normal}
 .logo-sub{font-size:10px;color:var(--muted)}
+@media(max-width:600px){.logo-sub{display:none}}
 .hdr-r{display:flex;align-items:center;gap:7px}
 .pill{background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:4px 11px;font-size:11px;font-weight:500;color:var(--muted)}
+@media(max-width:700px){.pill{display:none}}
 .live-pill{background:#FEF2F2;border:1px solid #FECACA;border-radius:20px;padding:4px 10px;display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--red)}
 body.dark .live-pill{background:rgba(220,38,38,.12);border-color:rgba(220,38,38,.3)}
 .blink{width:6px;height:6px;border-radius:50%;background:var(--red);animation:bl 1.4s infinite}
 @keyframes bl{0%,100%{opacity:1}50%{opacity:.2}}
 .ibtn{background:var(--card2);border:1px solid var(--border);border-radius:9px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .15s;color:var(--text);font-family:'Inter',sans-serif}
 .ibtn:hover{background:var(--border);transform:scale(1.05)}
+.ibtn:active{transform:scale(.96)}
 
 /* LAYOUT */
 .app{display:flex;flex:1;overflow:hidden}
@@ -40,70 +53,82 @@ body.dark .live-pill{background:rgba(220,38,38,.12);border-color:rgba(220,38,38,
 #map{width:100%;height:100%}
 
 /* SIDEBAR */
-.sidebar{width:340px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .3s,opacity .3s;overflow:hidden;box-shadow:var(--sh-md)}
+.sidebar{width:var(--sb-w);background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .3s cubic-bezier(.4,0,.2,1),opacity .3s,transform .3s;overflow:hidden;box-shadow:var(--sh-md)}
 .sidebar.collapsed{width:0;opacity:0}
-.stabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 4px}
-.stab{flex:1;padding:11px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+@media(max-width:768px){
+  .sidebar{position:absolute;left:0;top:0;bottom:0;z-index:250;width:90vw;max-width:380px;transform:translateX(0)}
+  .sidebar.collapsed{width:90vw;max-width:380px;transform:translateX(-100%);opacity:1}
+}
+.stabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 6px}
+.stab{flex:1;padding:13px 6px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
 .stab.on{color:var(--red);border-bottom-color:var(--red)}
 .stab:hover:not(.on){color:var(--text)}
-.sb-body{flex:1;overflow-y:scroll;padding:14px;scroll-behavior:smooth}
+.sb-body{flex:1;overflow-y:scroll;padding:16px;scroll-behavior:smooth}
 .panel{display:none}.panel.on{display:block}
 
+/* MOBILE OVERLAY */
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:249;backdrop-filter:blur(3px)}
+.mob-overlay.show{display:block}
+
 /* RISKOMETER */
-.rom{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:var(--r);padding:14px;margin-bottom:12px;color:#fff;position:relative;overflow:hidden}
-.rom::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:radial-gradient(circle,rgba(220,38,38,.3),transparent);border-radius:50%}
-.rom-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.rom{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:var(--r);padding:16px;margin-bottom:14px;color:#fff;position:relative;overflow:hidden}
+.rom::before{content:'';position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(220,38,38,.3),transparent);border-radius:50%}
+.rom-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .rom-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
-.rom-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}
-.rom-loading{font-size:12px;opacity:.6;text-align:center;padding:10px 0}
+.rom-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}
+.rom-loading{font-size:12px;opacity:.6;text-align:center;padding:14px 0}
 .rom-score-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:10px}
-.rom-score{font-size:3rem;font-weight:900;line-height:1}
-.rom-score-sub{font-size:11px;opacity:.6;margin-bottom:6px}
-.rom-bar-bg{background:rgba(255,255,255,.1);border-radius:20px;height:8px;overflow:hidden;margin-bottom:10px}
+.rom-score{font-size:3.4rem;font-weight:900;line-height:1}
+.rom-score-sub{font-size:11px;opacity:.6;margin-bottom:8px}
+.rom-bar-bg{background:rgba(255,255,255,.1);border-radius:20px;height:9px;overflow:hidden;margin-bottom:12px}
 .rom-bar{height:100%;border-radius:20px;transition:width 1.5s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444)}
-.rom-factors{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.rom-f{background:rgba(255,255,255,.07);border-radius:7px;padding:7px;text-align:center}
-.rom-fv{font-size:13px;font-weight:700;display:block}
+.rom-factors{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.rom-f{background:rgba(255,255,255,.07);border-radius:8px;padding:8px 6px;text-align:center}
+.rom-fv{font-size:14px;font-weight:700;display:block}
 .rom-fl{font-size:9px;opacity:.6;text-transform:uppercase;letter-spacing:.05em}
-.rom-upd{font-size:9px;opacity:.4;margin-top:8px;text-align:right}
+.rom-upd{font-size:9px;opacity:.4;margin-top:9px;text-align:right}
 
 /* GPS CARD */
-.gps-card{background:linear-gradient(135deg,#2563EB,#7C3AED);border-radius:var(--r);padding:13px;margin-bottom:12px;color:#fff;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 14px rgba(37,99,235,.3)}
+.gps-card{background:linear-gradient(135deg,#2563EB,#7C3AED);border-radius:var(--r);padding:14px;margin-bottom:14px;color:#fff;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 14px rgba(37,99,235,.3)}
 .gps-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,.4)}
-.gps-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.gps-ico{width:38px;height:38px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.gps-ttl{font-size:13px;font-weight:700}
-.gps-sub{font-size:11px;opacity:.75;margin-top:1px}
-.gps-btn-i{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;color:#fff;width:100%;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;text-align:center}
+.gps-card:active{transform:translateY(0)}
+.gps-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.gps-ico{width:40px;height:40px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.gps-ttl{font-size:14px;font-weight:700}
+.gps-sub{font-size:11px;opacity:.75;margin-top:2px}
+.gps-btn-i{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;color:#fff;width:100%;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;text-align:center}
 .gps-btn-i:hover{background:rgba(255,255,255,.28)}
-.gps-res{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px;display:none}
+.gps-res{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:14px;display:none}
 .gps-res.show{display:block;animation:fdin .3s ease}
 @keyframes fdin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-.gps-rl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--blue);margin-bottom:5px}
-.gps-coords{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;margin-bottom:4px}
-.gps-addr{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.45}
-.gps-rtag{display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:10px;border:1px solid}
-.copybtn{background:var(--blue);color:#fff;border:none;border-radius:7px;padding:7px 0;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;width:100%;transition:background .15s}
+.gps-rl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.gps-coords{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;margin-bottom:5px}
+.gps-addr{font-size:11px;color:var(--muted);margin-bottom:9px;line-height:1.45}
+.gps-rtag{display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px;margin-bottom:10px;border:1px solid}
+.copybtn{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;width:100%;transition:background .15s}
 .copybtn:hover{background:#1D4ED8}
+.copybtn:active{transform:scale(.98)}
 
 /* SEARCH */
-.sbox{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px}
-.sbox h3{font-size:13px;font-weight:700;margin-bottom:3px}
-.sbox p{font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.4}
-.srow{display:flex;gap:6px}
-.srow input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none;transition:border-color .2s;min-width:0}
+.sbox{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:14px}
+.sbox h3{font-size:14px;font-weight:700;margin-bottom:3px}
+.sbox p{font-size:11px;color:var(--muted);margin-bottom:11px;line-height:1.4}
+.srow{display:flex;gap:7px}
+.srow input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .2s;min-width:0}
 .srow input:focus{border-color:rgba(220,38,38,.5);box-shadow:0 0 0 3px rgba(220,38,38,.07)}
 .srow input::placeholder{color:var(--dim)}
-.srow button{background:var(--red);color:#fff;border:none;border-radius:8px;padding:0 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;white-space:nowrap}
+.srow button{background:var(--red);color:#fff;border:none;border-radius:9px;padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:background .15s;white-space:nowrap}
 .srow button:hover{background:#B91C1C}
-.slbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:7px}
-.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
-.chip{font-size:11px;font-weight:500;padding:4px 10px;border-radius:16px;border:1px solid var(--border);color:var(--muted);cursor:pointer;background:var(--card);transition:all .15s}
+.srow button:active{transform:scale(.97)}
+.slbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{font-size:12px;font-weight:500;padding:5px 11px;border-radius:16px;border:1px solid var(--border);color:var(--muted);cursor:pointer;background:var(--card);transition:all .15s}
 .chip:hover{border-color:var(--red);color:var(--red);background:#FEF2F2}
 body.dark .chip:hover{background:rgba(220,38,38,.1)}
+.chip:active{transform:scale(.96)}
 
 /* RESULT */
-.result{border-radius:var(--r);padding:13px;margin-bottom:12px;display:none}
+.result{border-radius:var(--r);padding:14px;margin-bottom:14px;display:none}
 .result.show{display:block;animation:fdin .3s ease}
 .rh{background:#FEF2F2;border:1px solid #FECACA}
 .rm{background:#FFF7ED;border:1px solid #FED7AA}
@@ -111,60 +136,71 @@ body.dark .chip:hover{background:rgba(220,38,38,.1)}
 body.dark .rh{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25)}
 body.dark .rm{background:rgba(234,88,12,.08);border-color:rgba(234,88,12,.25)}
 body.dark .rl{background:rgba(22,163,74,.08);border-color:rgba(22,163,74,.25)}
-.res-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
+.res-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;gap:8px}
 .res-name{font-size:14px;font-weight:700}
-.res-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:16px;color:#fff;white-space:nowrap}
+.res-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:16px;color:#fff;white-space:nowrap}
 .rh .res-name{color:#991B1B}.rm .res-name{color:#9A3412}.rl .res-name{color:#166534}
 .rh .res-badge{background:#DC2626}.rm .res-badge{background:#EA580C}.rl .res-badge{background:#16A34A}
-.res-desc{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px}
-.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.rgi{background:rgba(0,0,0,.04);border-radius:7px;padding:7px 9px}
+.res-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:11px}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.rgi{background:rgba(0,0,0,.04);border-radius:8px;padding:8px 10px}
 body.dark .rgi{background:rgba(255,255,255,.05)}
-.rgi-l{font-size:10px;color:var(--dim);font-weight:500;margin-bottom:2px}
+.rgi-l{font-size:10px;color:var(--dim);font-weight:500;margin-bottom:3px}
 .rgi-v{font-size:12px;font-weight:600}
 
 /* SOS */
-.sos{background:var(--red);border-radius:var(--r);padding:12px;margin-bottom:12px;display:none}
+.sos{background:var(--red);border-radius:var(--r);padding:13px;margin-bottom:14px;display:none}
 .sos.show{display:block}
-.sos-t{font-size:10px;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
-.sos-g{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.sos-n{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:7px;padding:6px 8px;text-align:center;cursor:pointer;text-decoration:none;display:block;transition:background .15s}
+.sos-t{font-size:10px;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px}
+.sos-g{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sos-n{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:7px 8px;text-align:center;cursor:pointer;text-decoration:none;display:block;transition:background .15s}
 .sos-n:hover{background:rgba(255,255,255,.28)}
-.sos-nn{font-size:15px;font-weight:800;display:block}
+.sos-n:active{transform:scale(.97)}
+.sos-nn{font-size:16px;font-weight:800;display:block}
 .sos-nl{font-size:10px;opacity:.8;display:block}
 
 /* STATS/INFO */
-.sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.sc{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px}
-.sn{font-size:1.45rem;font-weight:800;line-height:1}.sl{font-size:10px;color:var(--muted);margin-top:3px}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.sc{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:13px}
+.sn{font-size:1.5rem;font-weight:800;line-height:1}.sl{font-size:10px;color:var(--muted);margin-top:4px}
 .cr{color:var(--red)}.co{color:var(--orange)}.cb{color:var(--blue)}.cg{color:var(--green)}
-.ib{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:11px;margin-bottom:8px}
-.ib h4{font-size:12px;font-weight:700;margin-bottom:7px}
-.ib ul{list-style:none;font-size:11px;color:var(--muted);line-height:1.9}
+.ib{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:9px}
+.ib h4{font-size:13px;font-weight:700;margin-bottom:8px}
+.ib ul{list-style:none;font-size:12px;color:var(--muted);line-height:2}
 .ib ul li{display:flex;gap:6px}.ib ul li::before{content:"›";color:var(--red);font-weight:800;flex-shrink:0}
 
 /* MAP CONTROLS */
-.map-controls{position:absolute;top:12px;right:12px;z-index:200;display:flex;flex-direction:column;gap:7px}
-.mc{background:var(--card);border:1px solid var(--border);border-radius:9px;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:var(--sh-md);transition:all .15s;color:var(--text);font-family:'Inter',sans-serif}
+.map-controls{position:fixed;top:70px;right:14px;z-index:400;display:flex;flex-direction:column;gap:8px}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:var(--sh-md);transition:all .15s;color:var(--text);font-family:'Inter',sans-serif}
 .mc:hover{background:var(--card2);transform:scale(1.06)}
-.mc.off{opacity:.4;background:var(--card2)}
+.mc:active{transform:scale(.95)}
+.mc.off{opacity:.35;background:var(--card2)}
+@media(max-width:768px){.map-controls{top:auto;bottom:90px;right:10px}}
 
 /* MAP LEGEND */
-.map-legend{position:absolute;bottom:12px;right:12px;z-index:200;background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:11px;padding:10px 13px;box-shadow:var(--sh-md);backdrop-filter:blur(8px)}
+.map-legend{position:fixed;bottom:18px;right:14px;z-index:400;background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:12px;padding:11px 14px;box-shadow:var(--sh-md);backdrop-filter:blur(8px)}
 body.dark .map-legend{background:rgba(22,25,40,.96)}
-.ml-t{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:7px}
-.ml-r{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);margin-bottom:4px}
+.ml-t{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.ml-r{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-bottom:5px}
 .mld{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .mls{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+@media(max-width:600px){.map-legend{display:none}}
 
 /* SIDEBAR TOGGLE */
-.sb-tog{position:absolute;top:50%;left:0;transform:translateY(-50%);background:var(--card);border:1px solid var(--border);border-left:none;width:18px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:0 8px 8px 0;font-size:10px;color:var(--muted);z-index:201;box-shadow:2px 0 6px rgba(0,0,0,.07)}
+.sb-tog{position:fixed;top:50%;left:0;transform:translateY(-50%);background:var(--card);border:1px solid var(--border);border-left:none;width:20px;height:56px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:0 9px 9px 0;font-size:11px;color:var(--muted);z-index:402;box-shadow:2px 0 6px rgba(0,0,0,.07)}
 .sb-tog:hover{color:var(--text);background:var(--card2)}
+@media(max-width:768px){.sb-tog{display:none}}
+
+/* MOBILE MENU BTN */
+.mob-menu-btn{display:none;position:fixed;top:66px;left:10px;z-index:402;background:var(--card);border:1px solid var(--border);border-radius:10px;width:42px;height:42px;align-items:center;justify-content:center;font-size:18px;box-shadow:var(--sh-md);cursor:pointer}
+@media(max-width:768px){.mob-menu-btn{display:flex}}
 
 /* FABS */
-.fabs{position:fixed;bottom:14px;left:14px;z-index:200;display:flex;gap:8px}
-.fab{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:9px 15px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:var(--sh-md);color:var(--text);transition:all .2s;font-family:'Inter',sans-serif;position:relative}
+.fabs{position:fixed;bottom:18px;left:418px;z-index:400;display:flex;gap:8px;transition:left .3s}
+@media(max-width:768px){.fabs{bottom:14px;left:50%;transform:translateX(-50%);gap:7px}}
+.fab{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:var(--sh-md);color:var(--text);transition:all .2s;font-family:'Inter',sans-serif;position:relative;white-space:nowrap}
 .fab:hover{transform:translateY(-2px);box-shadow:var(--sh-lg)}
+.fab:active{transform:scale(.96)}
 .rfab{background:#011A12;border-color:rgba(52,211,153,.3);color:#34D399}
 .rfab:hover{background:#022c22}
 .nd{position:absolute;top:-5px;right:-5px;width:14px;height:14px;background:var(--red);border-radius:50%;border:2px solid var(--card);display:none;animation:bl 1s infinite}
@@ -182,52 +218,55 @@ body.dark .map-legend{background:rgba(22,25,40,.96)}
 .mbg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:flex-end;justify-content:flex-end;padding:14px;backdrop-filter:blur(5px)}
 .mbg.open{display:flex;animation:fdin .2s ease}
 @keyframes slup{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:768px){.mbg{padding:0;align-items:flex-end;justify-content:center}}
 
 /* BOT MODAL */
-.bot-m{background:var(--card);border:1px solid var(--border);border-radius:16px;width:360px;height:480px;display:flex;flex-direction:column;box-shadow:var(--sh-lg);animation:slup .25s ease;margin-bottom:54px;overflow:hidden}
-.bot-head{background:linear-gradient(135deg,#DC2626,#EA580C);padding:12px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
-.bot-av{width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.bot-hi h3{font-size:13px;font-weight:700;color:#fff}
+.bot-m{background:var(--card);border:1px solid var(--border);border-radius:16px;width:370px;height:500px;display:flex;flex-direction:column;box-shadow:var(--sh-lg);animation:slup .25s ease;margin-bottom:60px;overflow:hidden}
+@media(max-width:768px){.bot-m{width:100%;border-radius:20px 20px 0 0;margin-bottom:0;height:75vh}}
+.bot-head{background:linear-gradient(135deg,#DC2626,#EA580C);padding:13px 15px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.bot-av{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.bot-hi h3{font-size:14px;font-weight:700;color:#fff}
 .bot-hi p{font-size:10px;color:rgba(255,255,255,.75)}
-.bot-x{margin-left:auto;background:rgba(255,255,255,.2);border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center}
+.bot-x{margin-left:auto;background:rgba(255,255,255,.2);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center}
 .bot-x:hover{background:rgba(255,255,255,.35)}
-.bot-qs{padding:7px 10px;display:flex;gap:5px;overflow-x:scroll;border-bottom:1px solid var(--border);flex-shrink:0}
-.bq{font-size:10px;padding:4px 9px;border-radius:14px;border:1px solid var(--border);color:var(--muted);cursor:pointer;white-space:nowrap;background:var(--card2);transition:all .15s;flex-shrink:0;font-family:'Inter',sans-serif}
+.bot-qs{padding:8px 10px;display:flex;gap:5px;overflow-x:scroll;border-bottom:1px solid var(--border);flex-shrink:0}
+.bq{font-size:11px;padding:5px 10px;border-radius:14px;border:1px solid var(--border);color:var(--muted);cursor:pointer;white-space:nowrap;background:var(--card2);transition:all .15s;flex-shrink:0;font-family:'Inter',sans-serif}
 .bq:hover{border-color:var(--red);color:var(--red)}
-.bot-msgs{flex:1;overflow-y:scroll;padding:10px;display:flex;flex-direction:column;gap:7px}
-.bm{max-width:88%;font-size:11.5px;line-height:1.55;padding:8px 11px;border-radius:10px;white-space:pre-line;animation:fdin .2s}
+.bot-msgs{flex:1;overflow-y:scroll;padding:11px;display:flex;flex-direction:column;gap:8px}
+.bm{max-width:88%;font-size:12px;line-height:1.55;padding:9px 12px;border-radius:11px;white-space:pre-line;animation:fdin .2s}
 .bb{background:var(--card2);border:1px solid var(--border);color:var(--text);align-self:flex-start;border-bottom-left-radius:3px}
 .bu{background:var(--red);color:#fff;align-self:flex-end;border-bottom-right-radius:3px}
-.bot-inr{padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:6px;flex-shrink:0}
-.bot-inr input{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:7px 11px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none;transition:border-color .2s;min-width:0}
+.bot-inr{padding:9px 11px;border-top:1px solid var(--border);display:flex;gap:7px;flex-shrink:0}
+.bot-inr input{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .2s;min-width:0}
 .bot-inr input:focus{border-color:rgba(220,38,38,.5)}
 .bot-inr input::placeholder{color:var(--dim)}
-.bot-send{background:var(--red);border:none;border-radius:7px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bot-send{background:var(--red);border:none;border-radius:8px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .bot-send:hover{background:#B91C1C}
-.bot-send svg{width:13px;height:13px;fill:#fff}
+.bot-send svg{width:14px;height:14px;fill:#fff}
 
 /* RADIO MODAL */
-.rad-m{background:#011A12;border:1px solid rgba(52,211,153,.2);border-radius:16px;width:400px;max-height:520px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.7);animation:slup .25s ease;margin-bottom:54px;overflow:hidden}
-.rad-head{background:#022c22;padding:12px 14px;border-bottom:1px solid rgba(52,211,153,.12);flex-shrink:0}
+.rad-m{background:#011A12;border:1px solid rgba(52,211,153,.2);border-radius:16px;width:420px;max-height:540px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.7);animation:slup .25s ease;margin-bottom:60px;overflow:hidden}
+@media(max-width:768px){.rad-m{width:100%;border-radius:20px 20px 0 0;margin-bottom:0;max-height:80vh}}
+.rad-head{background:#022c22;padding:13px 15px;border-bottom:1px solid rgba(52,211,153,.12);flex-shrink:0}
 .rad-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-.rad-title{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#34D399;letter-spacing:.07em}
-.rad-x{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);border-radius:6px;width:26px;height:26px;cursor:pointer;color:#34D399;font-size:14px;display:flex;align-items:center;justify-content:center}
+.rad-title{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#34D399;letter-spacing:.07em}
+.rad-x{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);border-radius:7px;width:28px;height:28px;cursor:pointer;color:#34D399;font-size:15px;display:flex;align-items:center;justify-content:center}
 .rad-x:hover{background:rgba(52,211,153,.2)}
 .rad-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:#6EE7B7;opacity:.55}
-.notif-row{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(52,211,153,.1);flex-shrink:0}
-.notif-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:#6EE7B7;opacity:.7}
-.tsw{position:relative;width:36px;height:20px;cursor:pointer;display:inline-block}
+.notif-row{display:flex;align-items:center;justify-content:space-between;padding:9px 15px;border-bottom:1px solid rgba(52,211,153,.1);flex-shrink:0}
+.notif-lbl{font-family:'JetBrains Mono',monospace;font-size:11px;color:#6EE7B7;opacity:.7}
+.tsw{position:relative;width:38px;height:21px;cursor:pointer;display:inline-block}
 .tsw input{opacity:0;width:0;height:0;position:absolute}
 .ttrack{position:absolute;inset:0;background:#1e3a2f;border-radius:20px;border:1px solid rgba(52,211,153,.3);transition:background .2s}
-.tthumb{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#34D399;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.4);pointer-events:none}
+.tthumb{position:absolute;top:2px;left:2px;width:15px;height:15px;background:#34D399;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.4);pointer-events:none}
 .tsw input:checked+.ttrack{background:#064E3B}
-.tsw input:checked~.tthumb{transform:translateX(16px)}
-.rad-player{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(52,211,153,.1);flex-shrink:0}
+.tsw input:checked~.tthumb{transform:translateX(17px)}
+.rad-player{display:flex;align-items:center;gap:10px;padding:10px 15px;border-bottom:1px solid rgba(52,211,153,.1);flex-shrink:0}
 .rad-player p{font-size:10px;color:#6EE7B7;opacity:.65;flex:1;line-height:1.4;font-family:'JetBrains Mono',monospace}
-.play-btn{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);border-radius:7px;padding:6px 11px;font-size:11px;font-weight:700;color:#34D399;cursor:pointer;font-family:'JetBrains Mono',monospace;white-space:nowrap;transition:all .15s}
+.play-btn{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;color:#34D399;cursor:pointer;font-family:'JetBrains Mono',monospace;white-space:nowrap;transition:all .15s}
 .play-btn:hover{background:rgba(52,211,153,.22)}
-.rad-feed{flex:1;overflow-y:scroll;padding:10px}
-.re{padding:7px 9px;border-radius:6px;border-left:2px solid;margin-bottom:5px;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.6}
+.rad-feed{flex:1;overflow-y:scroll;padding:11px}
+.re{padding:8px 10px;border-radius:7px;border-left:2px solid;margin-bottom:6px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6}
 .re-alert{border-left-color:#EF4444;background:rgba(239,68,68,.06)}
 .re-normal{border-left-color:#34D399;background:rgba(52,211,153,.04)}
 .re-static{border-left-color:#374151;opacity:.35}
@@ -239,37 +278,66 @@ body.dark .map-legend{background:rgba(22,25,40,.96)}
 .re-static .re-txt{color:#6B7280;font-style:italic}
 
 /* INFO MODAL */
-.info-m{background:var(--card);border:1px solid var(--border);border-radius:16px;width:320px;box-shadow:var(--sh-lg);animation:slup .25s ease;margin-bottom:54px;overflow:hidden}
-.info-head{background:linear-gradient(135deg,#1E293B,#334155);padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
-.info-head h3{font-size:13px;font-weight:700;color:#fff}
-.info-x{background:rgba(255,255,255,.15);border:none;border-radius:7px;width:27px;height:27px;cursor:pointer;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
-.info-body{padding:16px;overflow-y:scroll;max-height:420px}
-.info-an{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--red);margin-bottom:4px}
-.info-desc{font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:14px}
-.info-tl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
-.team-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
-.tm{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:8px 11px}
-.tm-av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.tm-name{font-size:12px;font-weight:600}
+.info-m{background:var(--card);border:1px solid var(--border);border-radius:16px;width:340px;box-shadow:var(--sh-lg);animation:slup .25s ease;margin-bottom:60px;overflow:hidden}
+@media(max-width:768px){.info-m{width:100%;border-radius:20px 20px 0 0;margin-bottom:0}}
+.info-head{background:linear-gradient(135deg,#1E293B,#334155);padding:15px 17px;display:flex;align-items:center;justify-content:space-between}
+.info-head h3{font-size:14px;font-weight:700;color:#fff}
+.info-x{background:rgba(255,255,255,.15);border:none;border-radius:8px;width:29px;height:29px;cursor:pointer;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center}
+.info-body{padding:17px;overflow-y:scroll;max-height:420px}
+.info-an{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--red);margin-bottom:5px}
+.info-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:15px}
+.info-tl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:9px}
+.team-list{display:flex;flex-direction:column;gap:7px;margin-bottom:15px}
+.tm{display:flex;align-items:center;gap:11px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+.tm-av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.tm-name{font-size:13px;font-weight:600}
 .tm-role{font-size:10px;color:var(--muted)}
-.info-inst{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;display:flex;align-items:center;gap:10px}
-.info-inst-ico{font-size:22px}
-.info-inst-name{font-size:12px;font-weight:700}
+.info-inst{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:11px}
+.info-inst-ico{font-size:24px}
+.info-inst-name{font-size:13px;font-weight:700}
 .info-inst-sub{font-size:11px;color:var(--muted)}
-.info-ver{font-size:10px;color:var(--dim);text-align:center;margin-top:12px;font-family:'JetBrains Mono',monospace}
+.info-ver{font-size:10px;color:var(--dim);text-align:center;margin-top:13px;font-family:'JetBrains Mono',monospace}
 
 /* TOAST */
-.toast{position:fixed;top:66px;right:14px;z-index:2000;background:#022c22;border:1px solid rgba(52,211,153,.35);border-radius:12px;padding:10px 13px;display:none;align-items:center;gap:10px;box-shadow:0 8px 28px rgba(0,0,0,.5);max-width:280px}
+.toast{position:fixed;top:68px;right:14px;z-index:2000;background:#022c22;border:1px solid rgba(52,211,153,.35);border-radius:13px;padding:11px 14px;display:none;align-items:center;gap:11px;box-shadow:0 8px 28px rgba(0,0,0,.5);max-width:300px}
 .toast.show{display:flex;animation:slinr .4s cubic-bezier(.4,0,.2,1)}
 @keyframes slinr{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+@media(max-width:768px){.toast{right:10px;left:10px;max-width:unset}}
 .t-ico{font-size:18px;flex-shrink:0}
 .t-txt p{font-size:11px;font-weight:700;color:#34D399;font-family:'JetBrains Mono',monospace}
 .t-txt span{font-size:10px;color:#6EE7B7;opacity:.75;font-family:'JetBrains Mono',monospace;display:block;margin-top:2px}
 .t-x{background:none;border:none;color:#6EE7B7;cursor:pointer;font-size:16px;margin-left:4px;flex-shrink:0}
 
+/* ── TUTORIAL OVERLAY ── */
+/* tut-overlay is transparent container, visibility controlled via JS */
+.tut-overlay{position:fixed;inset:0;z-index:3000;pointer-events:none;display:none}
+.tut-overlay.active{display:block;pointer-events:none}
+/* Dark backdrop — controlled by JS show/hide */
+.tut-backdrop{position:fixed;inset:0;background:transparent;z-index:3001;pointer-events:none;display:none}
+.tut-backdrop.show{display:block}
+/* Spotlight ring — purely visual, no click blocking */
+.tut-spotlight{position:fixed;border-radius:14px;border:2px solid #DC2626;box-shadow:0 0 0 3px rgba(220,38,38,.25),0 0 0 9999px rgba(0,0,0,.55);transition:all .4s cubic-bezier(.4,0,.2,1);z-index:3002;pointer-events:none}
+body.dark .tut-spotlight{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px rgba(255,255,255,.15),0 0 0 9999px rgba(0,0,0,.68)}
+/* Box sits on top of everything and receives all clicks */
+.tut-box{position:fixed;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;width:300px;box-shadow:0 24px 64px rgba(0,0,0,.35);z-index:3020;pointer-events:all !important;cursor:default}
+.tut-step-badge{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin-bottom:6px}
+.tut-box h3{font-size:15px;font-weight:800;margin-bottom:8px;color:var(--text)}
+.tut-box p{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:18px}
+.tut-emoji{font-size:34px;margin-bottom:10px;display:block;text-align:center}
+.tut-footer{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tut-dots{display:flex;gap:5px}
+.tut-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:background .2s}
+.tut-dot.on{background:var(--red)}
+.tut-ok{background:var(--red);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer !important;font-family:'Inter',sans-serif;transition:all .15s;pointer-events:all !important;position:relative;z-index:3025}
+.tut-ok:hover{background:#B91C1C;transform:scale(1.04)}
+.tut-ok:active{transform:scale(.97)}
+.tut-skip{background:none;border:none;font-size:12px;color:var(--muted);cursor:pointer !important;font-family:'Inter',sans-serif;padding:4px;pointer-events:all !important;position:relative;z-index:3025}
+.tut-skip:hover{color:var(--text)}
+
+/* Leaflet overrides */
 .leaflet-popup-content-wrapper{border-radius:11px!important;box-shadow:var(--sh-lg)!important;font-family:'Inter',sans-serif!important;font-size:12px!important}
 .leaflet-popup-tip-container{display:none}
-.leaflet-control-zoom{border-radius:9px!important;overflow:hidden;border:1px solid var(--border)!important;box-shadow:var(--sh-md)!important}
+.leaflet-control-zoom{border-radius:10px!important;overflow:hidden;border:1px solid var(--border)!important;box-shadow:var(--sh-md)!important}
 .leaflet-control-zoom a{background:var(--card)!important;color:var(--text)!important;border-bottom-color:var(--border)!important}
 .leaflet-control-zoom a:hover{background:var(--card2)!important}
 </style>
@@ -278,35 +346,42 @@ body.dark .map-legend{background:rgba(22,25,40,.96)}
 
 <div class="hdr">
   <div class="logo">
-    <div class="logo-icon">&#x1F525;</div>
+    <div class="logo-icon">🔥</div>
     <div>
       <div class="logo-name">Alerta<em>Fuego</em> <span style="font-weight:300;font-size:.82rem">Chile</span></div>
       <div class="logo-sub">Sistema nacional de riesgo de incendios</div>
     </div>
   </div>
   <div class="hdr-r">
-    <div class="pill">&#x1F4C5; 25 mayo 2026</div>
+    <div class="pill" id="live-date">📅 ...</div>
     <div class="live-pill"><div class="blink"></div>Sistema activo</div>
-    <button class="ibtn" onclick="toggleDark()" id="theme-btn">&#x1F319;</button>
-    <button class="ibtn" onclick="toggleSidebar()">&#9776;</button>
+    <button class="ibtn" onclick="SND.dark();toggleDark()" id="theme-btn" title="Tema">🌙</button>
+    <button class="ibtn" onclick="SND.tab();toggleSidebar()" id="sb-btn" title="Panel">☰</button>
+    <button class="ibtn" onclick="SND.tut();startTutorial()" title="Tutorial" style="font-size:13px;font-weight:700;color:var(--red)">?</button>
   </div>
 </div>
 
 <div class="app">
+  <!-- Mobile overlay -->
+  <div class="mob-overlay" id="mob-overlay" onclick="closeSidebarMobile()"></div>
+
+  <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
     <div class="stabs">
-      <div class="stab on" data-p="buscar">&#x1F50D; Buscar</div>
-      <div class="stab" data-p="info">&#x1F4CA; Info</div>
-      <div class="stab" data-p="guia">&#x1F4CB; Guia</div>
+      <div class="stab on" data-p="buscar" onclick="SND.tab();showPanel('buscar')">🔍 Buscar</div>
+      <div class="stab" data-p="info" onclick="SND.tab();showPanel('info')">📊 Info</div>
+      <div class="stab" data-p="guia" onclick="SND.tab();showPanel('guia')">📋 Guía</div>
     </div>
     <div class="sb-body">
+
+      <!-- BUSCAR PANEL -->
       <div class="panel on" id="panel-buscar">
-        <div class="rom">
+        <div class="rom" id="tut-rom">
           <div class="rom-top">
-            <div class="rom-title">&#x26A1; Indice de riesgo hoy</div>
+            <div class="rom-title">⚡ Índice de riesgo · Hoy</div>
             <div class="rom-badge" id="rom-badge">Cargando...</div>
           </div>
-          <div class="rom-loading" id="rom-loading">Obteniendo datos meteorologicos...</div>
+          <div class="rom-loading" id="rom-loading">Obteniendo datos meteorológicos...</div>
           <div id="rom-data" style="display:none">
             <div class="rom-score-row">
               <div class="rom-score" id="rom-score">-</div>
@@ -314,50 +389,52 @@ body.dark .map-legend{background:rgba(22,25,40,.96)}
             </div>
             <div class="rom-bar-bg"><div class="rom-bar" id="rom-bar" style="width:0%"></div></div>
             <div class="rom-factors">
-              <div class="rom-f"><span class="rom-fv" id="rf-t">-</span><span class="rom-fl">&#x1F321;&#xFE0F; Temp</span></div>
-              <div class="rom-f"><span class="rom-fv" id="rf-h">-</span><span class="rom-fl">&#x1F4A7; Humedad</span></div>
-              <div class="rom-f"><span class="rom-fv" id="rf-w">-</span><span class="rom-fl">&#x1F32C;&#xFE0F; Viento</span></div>
+              <div class="rom-f"><span class="rom-fv" id="rf-t">-</span><span class="rom-fl">🌡️ Temp</span></div>
+              <div class="rom-f"><span class="rom-fv" id="rf-h">-</span><span class="rom-fl">💧 Humedad</span></div>
+              <div class="rom-f"><span class="rom-fv" id="rf-w">-</span><span class="rom-fl">🌬️ Viento</span></div>
             </div>
           </div>
           <div class="rom-upd" id="rom-upd"></div>
         </div>
 
-        <div class="gps-card" onclick="getGPS()">
+        <div class="gps-card" id="tut-gps" onclick="SND.gps();getGPS()">
           <div class="gps-top">
-            <div class="gps-ico">&#x1F4CD;</div>
-            <div><div class="gps-ttl">Mi ubicacion actual</div><div class="gps-sub">Ver riesgo de tu zona en tiempo real</div></div>
+            <div class="gps-ico">📍</div>
+            <div><div class="gps-ttl">Mi ubicación actual</div><div class="gps-sub">Ver riesgo de tu zona en tiempo real</div></div>
           </div>
-          <div class="gps-btn-i">&#x1F4E1; Detectar mi posicion GPS</div>
+          <div class="gps-btn-i">📡 Detectar mi posición GPS</div>
         </div>
         <div class="gps-res" id="gps-res">
-          <div class="gps-rl">&#x1F4CD; Tu ubicacion</div>
+          <div class="gps-rl">📍 Tu ubicación</div>
           <div class="gps-coords" id="gps-coords">-</div>
-          <div class="gps-addr" id="gps-addr">Obteniendo direccion...</div>
+          <div class="gps-addr" id="gps-addr">Obteniendo dirección...</div>
           <div id="gps-rtag" class="gps-rtag"></div>
-          <button class="copybtn" onclick="copyGPS()">&#x1F4CB; Copiar para dar a Bomberos (132)</button>
+          <button class="copybtn" onclick="SND.copy();copyGPS()">📋 Copiar para dar a Bomberos (132)</button>
         </div>
 
-        <div class="sbox">
+        <div class="sbox" id="tut-search">
           <h3>Buscar zona o ciudad</h3>
-          <p>Ciudad, region o barrio en Chile</p>
+          <p>Ciudad, región o barrio en Chile</p>
           <div class="srow">
-            <input id="addr-in" type="text" placeholder="Ej: Valparaiso, Temuco..." onkeydown="if(event.key==='Enter')doSearch()">
-            <button onclick="doSearch()">Buscar</button>
+            <input id="addr-in" type="text" placeholder="Ej: Valparaíso, Temuco..." onkeydown="if(event.key==='Enter'){SND.click();doSearch()}">
+            <button onclick="SND.click();doSearch()">Buscar</button>
           </div>
         </div>
 
         <div class="slbl">Zonas frecuentes</div>
-        <div class="chips">
-          <span class="chip" onclick="lz('vp_baron')">Cerro Baron</span>
-          <span class="chip" onclick="lz('vp_rodelillo')">Rodelillo</span>
-          <span class="chip" onclick="lz('vp_alegre')">C. Alegre</span>
-          <span class="chip" onclick="lz('santiago')">Santiago RM</span>
-          <span class="chip" onclick="lz('concepcion')">Concepcion</span>
-          <span class="chip" onclick="lz('temuco')">Temuco</span>
-          <span class="chip" onclick="lz('vina')">Vina del Mar</span>
-          <span class="chip" onclick="lz('serena')">La Serena</span>
-          <span class="chip" onclick="lz('pucon')">Pucon</span>
-          <span class="chip" onclick="lz('santaolga')">Santa Olga</span>
+        <div class="chips" id="tut-chips">
+          <span class="chip" onclick="SND.click();lz('vp_baron')">Cerro Barón</span>
+          <span class="chip" onclick="SND.click();lz('vp_rodelillo')">Rodelillo</span>
+          <span class="chip" onclick="SND.click();lz('vp_alegre')">C. Alegre</span>
+          <span class="chip" onclick="SND.click();lz('vp_canas')">Las Cañas</span>
+          <span class="chip" onclick="SND.click();lz('vp_mariposa')">C. Mariposa</span>
+          <span class="chip" onclick="SND.click();lz('santiago')">Santiago RM</span>
+          <span class="chip" onclick="SND.click();lz('concepcion')">Concepción</span>
+          <span class="chip" onclick="SND.click();lz('temuco')">Temuco</span>
+          <span class="chip" onclick="SND.click();lz('vina')">Viña del Mar</span>
+          <span class="chip" onclick="SND.click();lz('serena')">La Serena</span>
+          <span class="chip" onclick="SND.click();lz('pucon')">Pucón</span>
+          <span class="chip" onclick="SND.click();lz('santaolga')">Santa Olga</span>
         </div>
 
         <div class="result" id="result-card">
@@ -367,132 +444,139 @@ body.dark .map-legend{background:rgba(22,25,40,.96)}
           </div>
           <div class="res-desc" id="r-desc">-</div>
           <div class="res-grid">
-            <div class="rgi"><div class="rgi-l">Vegetacion</div><div class="rgi-v" id="r-veg">-</div></div>
+            <div class="rgi"><div class="rgi-l">Vegetación</div><div class="rgi-v" id="r-veg">-</div></div>
             <div class="rgi"><div class="rgi-l">Terreno</div><div class="rgi-v" id="r-pend">-</div></div>
             <div class="rgi"><div class="rgi-l">Acceso bomberos</div><div class="rgi-v" id="r-acc">-</div></div>
-            <div class="rgi"><div class="rgi-l">Temporada critica</div><div class="rgi-v" id="r-temp">-</div></div>
+            <div class="rgi"><div class="rgi-l">Temporada crítica</div><div class="rgi-v" id="r-temp">-</div></div>
           </div>
         </div>
-
         <div class="sos" id="sos-card">
-          <div class="sos-t">Emergencia - Llama ahora</div>
+          <div class="sos-t">⚠️ Emergencia — Llama ahora</div>
           <div class="sos-g">
-            <a class="sos-n" href="tel:132"><span class="sos-nn">132</span><span class="sos-nl">Bomberos</span></a>
-            <a class="sos-n" href="tel:133"><span class="sos-nn">133</span><span class="sos-nl">Carabineros</span></a>
-            <a class="sos-n" href="tel:131"><span class="sos-nn">131</span><span class="sos-nl">SAMU</span></a>
-            <a class="sos-n" href="tel:1404"><span class="sos-nn">1404</span><span class="sos-nl">SENAPRED</span></a>
+            <a class="sos-n" href="tel:132" onclick="SND.alert()"><span class="sos-nn">132</span><span class="sos-nl">🚒 Bomberos</span></a>
+            <a class="sos-n" href="tel:133" onclick="SND.alert()"><span class="sos-nn">133</span><span class="sos-nl">👮 Carabineros</span></a>
+            <a class="sos-n" href="tel:131" onclick="SND.alert()"><span class="sos-nn">131</span><span class="sos-nl">🚑 SAMU</span></a>
+            <a class="sos-n" href="tel:1404" onclick="SND.alert()"><span class="sos-nn">1404</span><span class="sos-nl">🆘 SENAPRED</span></a>
           </div>
         </div>
       </div>
 
+      <!-- INFO PANEL -->
       <div class="panel" id="panel-info">
-        <div class="slbl" style="margin-bottom:10px">Temporada 2025-2026</div>
+        <div class="slbl" style="margin-bottom:11px">Temporada 2025–2026 · Chile</div>
         <div class="sg">
           <div class="sc"><div class="sn cr">8.400</div><div class="sl">Incendios registrados</div></div>
-          <div class="sc"><div class="sn co">185.000</div><div class="sl">Hectareas afectadas</div></div>
+          <div class="sc"><div class="sn co">185.000</div><div class="sl">Hectáreas afectadas</div></div>
           <div class="sc"><div class="sn cb">14</div><div class="sl">Regiones en alerta</div></div>
           <div class="sc"><div class="sn cg">68%</div><div class="sl">Controlados</div></div>
         </div>
-        <div class="ib"><h4>Zonas de mayor riesgo</h4><ul>
-          <li>Valparaiso (cerros) - interfaz urbana critica</li>
-          <li>Biobio / Arauco - plantaciones forestales</li>
-          <li>La Araucania - bosque nativo mas viento</li>
-          <li>OHiggins - pastizales secos en verano</li>
-          <li>Maule - interfaz agricola-forestal</li>
+        <div class="ib"><h4>🔴 Zonas de mayor riesgo</h4><ul>
+          <li>Valparaíso (cerros) — interfaz urbana crítica</li>
+          <li>Biobío / Arauco — plantaciones forestales</li>
+          <li>La Araucanía — bosque nativo + viento</li>
+          <li>O'Higgins — pastizales secos en verano</li>
+          <li>Maule — interfaz agrícola-forestal</li>
         </ul></div>
-        <div class="ib"><h4>Temporada por zona</h4><ul>
-          <li>Norte (I-IV): oct-dic, riesgo moderado</li>
-          <li>Centro (V-VII): dic-mar, riesgo ALTO</li>
-          <li>Sur (VIII-X): ene-mar, riesgo extremo</li>
+        <div class="ib"><h4>📅 Temporada de incendios</h4><ul>
+          <li>Norte (I–IV): oct–dic, riesgo moderado</li>
+          <li>Centro (V–VII): dic–mar, riesgo ALTO</li>
+          <li>Sur (VIII–X): ene–mar, riesgo extremo</li>
           <li>Viento Puelche: factor agravante clave</li>
         </ul></div>
-        <div class="ib"><h4>Emergencias</h4><ul>
+        <div class="ib"><h4>📞 Emergencias nacionales</h4><ul>
           <li>Bomberos: 132 (gratuito, 24/7)</li>
           <li>Carabineros: 133</li>
           <li>SAMU: 131</li>
-          <li>CONAF incendios: 800 200 100</li>
+          <li>CONAF: 800 200 100 (gratuito)</li>
           <li>SENAPRED: 1404</li>
         </ul></div>
       </div>
 
+      <!-- GUÍA PANEL -->
       <div class="panel" id="panel-guia">
-        <div class="ib"><h4>Protege tu hogar</h4><ul>
-          <li>Despeja 30m de vegetacion seca alrededor</li>
+        <div class="ib"><h4>🏠 Protege tu hogar</h4><ul>
+          <li>Despeja 30 m de vegetación seca alrededor</li>
           <li>Limpia canaletas y techo de hojas</li>
           <li>Ten manguera lista y conectada</li>
           <li>Conoce dos rutas de salida distintas</li>
+          <li>Elimina objetos inflamables bajo la casa</li>
         </ul></div>
-        <div class="ib"><h4>Kit de emergencia (5 min)</h4><ul>
+        <div class="ib"><h4>🎒 Kit de emergencia (5 min)</h4><ul>
           <li>Documentos en bolsa impermeable</li>
-          <li>Agua 3 litros por persona</li>
-          <li>Medicamentos para 5 dias</li>
-          <li>Linterna y radio a pilas</li>
-          <li>Ropa 3 dias mas dinero en efectivo</li>
-          <li>Cargador portatil para celular</li>
+          <li>Agua — 3 litros por persona</li>
+          <li>Medicamentos para 5 días</li>
+          <li>Linterna + radio a pilas</li>
+          <li>Ropa 3 días + dinero efectivo</li>
+          <li>Cargador portátil para celular</li>
         </ul></div>
-        <div class="ib"><h4>Evacua INMEDIATAMENTE si</h4><ul>
+        <div class="ib"><h4>🚨 Evacúa INMEDIATAMENTE si</h4><ul>
           <li>Autoridades o bomberos lo ordenan</li>
-          <li>Ves llamas a menos de 500m</li>
+          <li>Ves llamas a menos de 500 m</li>
           <li>Humo impide respirar con normalidad</li>
           <li>Se corta la electricidad de golpe</li>
         </ul></div>
-        <div class="ib"><h4>Al evacuar recuerda</h4><ul>
-          <li>Baja hacia zonas planas o el mar</li>
-          <li>Evita quebradas, acumulan humo</li>
+        <div class="ib"><h4>🗺️ Al evacuar recuerda</h4><ul>
+          <li>Baja siempre hacia zonas planas o el mar</li>
+          <li>Evita quebradas — acumulan humo</li>
           <li>Cierra puertas y ventanas al salir</li>
-          <li>No uses el auto si calles estan bloqueadas</li>
+          <li>No uses el auto si las calles están bloqueadas</li>
         </ul></div>
       </div>
-    </div>
-  </div>
 
+    </div><!-- sb-body -->
+  </div><!-- sidebar -->
+
+  <!-- MAP AREA -->
   <div class="map-wrap">
     <div id="map"></div>
-    <div id="map-error" style="display:none;position:absolute;inset:0;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:100">
-      <div style="font-size:2.5rem">🗺️</div>
-      <div style="font-weight:700;font-size:1rem">No se pudo cargar el mapa</div>
-      <div style="font-size:12px;color:var(--muted);text-align:center;max-width:260px;line-height:1.6">Verifica tu conexión a internet. El mapa requiere acceso a <b>unpkg.com</b> y <b>cartocdn.com</b>.</div>
-      <button onclick="location.reload()" style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">🔄 Reintentar</button>
+
+    <!-- Mobile menu btn -->
+    <div class="mob-menu-btn" onclick="openSidebarMobile()">☰</div>
+
+    <!-- Desktop sidebar toggle -->
+    <div class="sb-tog" id="sb-tog" onclick="SND.tab();toggleSidebar()">›</div>
+
+    <div class="map-controls" id="tut-controls">
+      <button class="mc" id="mc-b" onclick="SND.click();toggleL('bomb')" title="Cuarteles bomberos">🚒</button>
+      <button class="mc" id="mc-s" onclick="SND.click();toggleL('safe')" title="Zonas seguras">✅</button>
+      <button class="mc" id="mc-r" onclick="SND.click();toggleL('risk')" title="Zonas de riesgo">🔥</button>
+      <button class="mc" onclick="SND.click();map.setView([-35.5,-71.5],6)" title="Ver Chile completo">🇨🇱</button>
     </div>
-    <div class="sb-tog" id="sb-tog" onclick="toggleSidebar()">&#x203A;</div>
-    <div class="map-controls">
-      <button class="mc" id="mc-b" onclick="toggleL('bomb')" title="Cuarteles">&#x1F692;</button>
-      <button class="mc" id="mc-s" onclick="toggleL('safe')" title="Zonas seguras">&#x2705;</button>
-      <button class="mc" id="mc-r" onclick="toggleL('risk')" title="Zonas riesgo">&#x1F525;</button>
-      <button class="mc" onclick="map.setView([-35.5,-71.5],6)">&#x1F1E8;&#x1F1F1;</button>
-    </div>
+
     <div class="map-legend">
       <div class="ml-t">Leyenda</div>
       <div class="ml-r"><div class="mld" style="background:#DC2626"></div>Riesgo alto/extremo</div>
       <div class="ml-r"><div class="mld" style="background:#EA580C"></div>Riesgo moderado</div>
       <div class="ml-r"><div class="mld" style="background:#16A34A"></div>Zona segura</div>
       <div class="ml-r"><div class="mls" style="background:#DC2626"></div>Cuartel Bomberos</div>
-      <div class="ml-r"><div class="mls" style="background:#2563EB"></div>Tu ubicacion GPS</div>
+      <div class="ml-r"><div class="mls" style="background:#2563EB"></div>Tu ubicación</div>
+    </div>
+
+    <div class="fabs" id="tut-fabs">
+      <button class="fab rfab" onclick="SND.radio();openRadio()" id="tut-radio">
+        <div class="sig"><span></span><span></span><span></span></div>Radio CB
+        <div class="nd" id="radio-nd"></div>
+      </button>
+      <button class="fab" onclick="SND.click();openBot()" id="tut-bot">🤖 Asistente</button>
+      <button class="fab" onclick="SND.click();openInfo()">ℹ️</button>
     </div>
   </div>
 </div>
 
-<div class="fabs">
-  <button class="fab rfab" onclick="openRadio()">
-    <div class="sig"><span></span><span></span><span></span></div>Radio CB
-    <div class="nd" id="radio-nd"></div>
-  </button>
-  <button class="fab" onclick="openBot()">&#x1F916; Asistente</button>
-  <button class="fab" onclick="openInfo()">&#x2139;&#xFE0F;</button>
-</div>
-
+<!-- TOAST -->
 <div class="toast" id="toast">
-  <div class="t-ico">&#x1F4E1;</div>
+  <div class="t-ico">📡</div>
   <div class="t-txt"><p id="t-title">Aviso</p><span id="t-body">-</span></div>
-  <button class="t-x" onclick="closeToast()">&#x2715;</button>
+  <button class="t-x" onclick="closeToast()">✕</button>
 </div>
 
+<!-- BOT MODAL -->
 <div class="mbg" id="bot-bg" onclick="if(event.target===this)closeBot()">
   <div class="bot-m">
     <div class="bot-head">
-      <div class="bot-av">&#x1F916;</div>
-      <div class="bot-hi"><h3>Asistente AlertaFuego</h3><p>Experto en incendios Chile</p></div>
-      <button class="bot-x" onclick="closeBot()">&#x2715;</button>
+      <div class="bot-av">🤖</div>
+      <div class="bot-hi"><h3>Asistente AlertaFuego</h3><p>Experto en incendios Chile · Respuesta inmediata</p></div>
+      <button class="bot-x" onclick="closeBot()">✕</button>
     </div>
     <div class="bot-qs">
       <button class="bq" onclick="bask('Zonas con mas riesgo de incendio en Chile')">Zonas peligrosas</button>
@@ -503,7 +587,7 @@ body.dark .map-legend{background:rgba(22,25,40,.96)}
       <button class="bq" onclick="bask('Como evacuo de forma segura')">Evacuar</button>
     </div>
     <div class="bot-msgs" id="bot-msgs">
-      <div class="bm bb">Hola. Soy el asistente AlertaFuego para Chile. Puedo orientarte sobre zonas de riesgo, que hacer en emergencias, como proteger tu hogar y mas. En que te ayudo?</div>
+      <div class="bm bb">👋 Hola. Soy el asistente AlertaFuego para Chile. Puedo orientarte sobre zonas de riesgo, qué hacer en emergencias, cómo proteger tu hogar y más. ¿En qué te ayudo?</div>
     </div>
     <div class="bot-inr">
       <input type="text" id="bot-in" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')bsend()">
@@ -512,17 +596,18 @@ body.dark .map-legend{background:rgba(22,25,40,.96)}
   </div>
 </div>
 
+<!-- RADIO MODAL -->
 <div class="mbg" id="rad-bg" onclick="if(event.target===this)closeRadio()">
   <div class="rad-m">
     <div class="rad-head">
       <div class="rad-top">
-        <div class="rad-title">RADIO BOMBEROS CHILE</div>
-        <button class="rad-x" onclick="closeRadio()">&#x2715;</button>
+        <div class="rad-title">📡 RADIO BOMBEROS CHILE</div>
+        <button class="rad-x" onclick="closeRadio()">✕</button>
       </div>
-      <div class="rad-meta">Simulacion canal operaciones - Prototipo AlertaFuego</div>
+      <div class="rad-meta">Simulación canal operaciones · Prototipo AlertaFuego 2026</div>
     </div>
     <div class="notif-row">
-      <span class="notif-lbl">Notificaciones de alerta</span>
+      <span class="notif-lbl">🔔 Notificaciones de alerta</span>
       <label class="tsw">
         <input type="checkbox" id="notif-chk" checked onchange="notifsOn=this.checked">
         <div class="ttrack"></div>
@@ -530,97 +615,328 @@ body.dark .map-legend{background:rgba(22,25,40,.96)}
       </label>
     </div>
     <div class="rad-player">
-      <p>Radio Bomberos Chile oficial 107.5 FM - Stream en vivo</p>
-      <button class="play-btn" onclick="window.open('https://www.bomberos.cl/online/radio/','_blank')">&#x25B6; En vivo</button>
+      <p>🔴 Radio Bomberos Chile oficial 107.5 FM · Stream en vivo</p>
+      <button class="play-btn" onclick="window.open('https://www.bomberos.cl/online/radio/','_blank')">▶ En vivo</button>
     </div>
     <div class="rad-feed" id="rad-feed"></div>
   </div>
 </div>
 
+<!-- INFO MODAL -->
 <div class="mbg" id="info-bg" onclick="if(event.target===this)closeInfo()">
   <div class="info-m">
     <div class="info-head">
       <h3>Acerca de AlertaFuego</h3>
-      <button class="info-x" onclick="closeInfo()">&#x2715;</button>
+      <button class="info-x" onclick="closeInfo()">✕</button>
     </div>
     <div class="info-body">
-      <div class="info-an">AlertaFuego Chile v1.0</div>
-      <div class="info-desc">Sistema de visualizacion de riesgo de incendios con datos meteorologicos en tiempo real para Chile. Combina condiciones climaticas actuales, zonas historicas de riesgo y recursos de emergencia para ayudar a la ciudadania.</div>
+      <div class="info-an">AlertaFuego Chile v2.5</div>
+      <div class="info-desc">Sistema de visualización de riesgo de incendios con datos meteorológicos en tiempo real para Chile. Combina condiciones climáticas actuales, zonas históricas de riesgo y recursos de emergencia.</div>
       <div class="info-tl">Equipo de desarrollo</div>
       <div class="team-list">
-        <div class="tm"><div class="tm-av" style="background:#FEF2F2">&#x1F9D1;&#x200D;&#x1F4BB;&#x1F468;&#x200D;&#x1F527;</div><div><div class="tm-name">Benjamin Caceres</div><div class="tm-role">Desarrollo, Dise&#xF1;o, Idea y Testing</div></div></div>
-        <div class="tm"><div class="tm-av" style="background:#EFF6FF">&#x1F468;&#x200D;&#x1F4BB;</div><div><div class="tm-name">Gian Saavedra</div><div class="tm-role">Testing y Dise&#xF1;o</div></div></div>
-        <div class="tm"><div class="tm-av" style="background:#F0FDF4">&#x1F468;&#x200D;&#x1F4BB;</div><div><div class="tm-name">Tomas Orellana</div><div class="tm-role">Desarrollo y Idea</div></div></div>
-        <div class="tm"><div class="tm-av" style="background:#FFF7ED">&#x1F468;&#x200D;&#x1F4BB;</div><div><div class="tm-name">Sebastian Zuniga</div><div class="tm-role">Informaci&#xF3;n y Testing</div></div></div>
-        <div class="tm"><div class="tm-av" style="background:#F5F3FF">&#x1F468;&#x200D;&#x1F4BB;</div><div><div class="tm-name">Martin Vega</div><div class="tm-role">Idea y Dise&#xF1;o</div></div></div>
+        <div class="tm"><div class="tm-av" style="background:#FEF2F2">👨‍💻</div><div><div class="tm-name">Benjamín Cáceres</div><div class="tm-role">Desarrollo, Idea, Diseño y Testing</div></div></div>
+        <div class="tm"><div class="tm-av" style="background:#EFF6FF">👨‍💻</div><div><div class="tm-name">Gian Saavedra</div><div class="tm-role">Diseño y Testing</div></div></div>
+        <div class="tm"><div class="tm-av" style="background:#F0FDF4">👨‍💻</div><div><div class="tm-name">Tomás Orellana</div><div class="tm-role">Testing y UX</div></div></div>
+        <div class="tm"><div class="tm-av" style="background:#FFF7ED">👨‍💻</div><div><div class="tm-name">Sebastián Zúñiga</div><div class="tm-role">Diseño e Idea</div></div></div>
+        <div class="tm"><div class="tm-av" style="background:#F5F3FF">👨‍💻</div><div><div class="tm-name">Martín Vega</div><div class="tm-role">Idea y Testing</div></div></div>
       </div>
       <div class="info-inst">
-        <div class="info-inst-ico">&#x1F393;</div>
-        <div><div class="info-inst-name">DuocUC Valparaiso</div><div class="info-inst-sub">Ingenieria en Informatica</div></div>
+        <div class="info-inst-ico">🎓</div>
+        <div><div class="info-inst-name">DuocUC Valparaíso</div><div class="info-inst-sub">Ingeniería en Informática</div></div>
       </div>
-      <div class="info-ver">AlertaFuego 2026 - Prototipo academico</div>
+      <div class="info-ver">AlertaFuego © 2026 · Prototipo académico</div>
+    </div>
+  </div>
+</div>
+
+<!-- TUTORIAL -->
+<div class="tut-backdrop" id="tut-backdrop" style="display:none"></div>
+<div class="tut-spotlight" id="tut-spot" style="opacity:0"></div>
+<div class="tut-overlay" id="tut-overlay">
+  <div class="tut-box" id="tut-box">
+    <span class="tut-emoji">🔥</span>
+    <div class="tut-step-badge">Paso 1 de 6</div>
+    <h3 class="tut-title">Bienvenido a AlertaFuego</h3>
+    <p class="tut-desc">Te mostramos cómo usar cada función.</p>
+    <div class="tut-footer">
+      <button class="tut-skip" onclick="endTutorial()">Saltar</button>
+      <div class="tut-dots"></div>
+      <button class="tut-ok" onclick="nextTutStep()">Entendido →</button>
     </div>
   </div>
 </div>
 
 <script>
-// THEME
+// ── AUDIO ENGINE ─────────────────────────────────────────────────
+var AC = null;
+function getAC(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}return AC;}
+var SND = {
+  _o: function(freq,type,dur,vol,t0,ac){
+    var o=ac.createOscillator(),g=ac.createGain();
+    o.type=type;o.frequency.setValueAtTime(freq,t0);
+    g.gain.setValueAtTime(0,t0);
+    g.gain.linearRampToValueAtTime(vol,t0+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    o.connect(g);g.connect(ac.destination);
+    o.start(t0);o.stop(t0+dur+0.05);
+  },
+  _noise: function(dur,vol,ac){
+    try{
+      var buf=ac.createBuffer(1,Math.floor(ac.sampleRate*dur),ac.sampleRate);
+      var d=buf.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*vol;
+      var src=ac.createBufferSource(),g=ac.createGain();
+      g.gain.setValueAtTime(vol,ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+dur);
+      src.buffer=buf;src.connect(g);g.connect(ac.destination);src.start();
+    }catch(e){}
+  },
+  // Soft UI click — short high sine
+  click: function(){
+    var ac=getAC();if(!ac)return;
+    this._o(700,'sine',0.07,0.05,ac.currentTime,ac);
+  },
+  // Tab switch — two quick ascending tones
+  tab: function(){
+    var ac=getAC();if(!ac)return;var t=ac.currentTime;
+    this._o(480,'sine',0.07,0.05,t,ac);
+    this._o(640,'sine',0.07,0.05,t+0.06,ac);
+  },
+  // Search/zone found — pleasant success chord
+  success: function(){
+    var ac=getAC();if(!ac)return;var t=ac.currentTime;
+    this._o(523,'sine',0.18,0.08,t,ac);   // C5
+    this._o(659,'sine',0.16,0.07,t+0.05,ac); // E5
+    this._o(784,'sine',0.14,0.06,t+0.1,ac);  // G5
+  },
+  // GPS found — ascending arpeggio
+  gps: function(){
+    var ac=getAC();if(!ac)return;var t=ac.currentTime;
+    this._o(440,'sine',0.1,0.06,t,ac);
+    this._o(554,'sine',0.1,0.06,t+0.08,ac);
+    this._o(659,'sine',0.1,0.07,t+0.16,ac);
+    this._o(880,'sine',0.12,0.08,t+0.24,ac);
+  },
+  // Emergency/alert — urgent double beep square wave
+  alert: function(){
+    var ac=getAC();if(!ac)return;var t=ac.currentTime;
+    this._o(960,'square',0.09,0.09,t,ac);
+    this._o(800,'square',0.09,0.07,t+0.12,ac);
+  },
+  // Copy success — soft chime
+  copy: function(){
+    var ac=getAC();if(!ac)return;var t=ac.currentTime;
+    this._o(1047,'sine',0.15,0.07,t,ac);   // C6
+    this._o(1319,'sine',0.12,0.05,t+0.08,ac); // E6
+  },
+  // Radio open — crackle + descending tone (keep original feel)
+  radio: function(){
+    var ac=getAC();if(!ac)return;
+    this._noise(0.14,0.09,ac);
+    var t=ac.currentTime;
+    this._o(1400,'sine',0.04,0.05,t+0.05,ac);
+    this._o(1100,'sine',0.06,0.05,t+0.1,ac);
+    this._o(900,'sine',0.08,0.06,t+0.16,ac);
+  },
+  // Radio message alert — morse-style double pip
+  radioPip: function(){
+    var ac=getAC();if(!ac)return;var t=ac.currentTime;
+    this._noise(0.05,0.05,ac);
+    this._o(1100,'sine',0.05,0.06,t+0.04,ac);
+    this._o(1100,'sine',0.05,0.06,t+0.14,ac);
+  },
+  // Toast notification — radio squelch
+  toast: function(){
+    var ac=getAC();if(!ac)return;
+    this._noise(0.06,0.06,ac);
+    var t=ac.currentTime;
+    this._o(880,'sine',0.05,0.06,t+0.05,ac);
+    this._o(880,'sine',0.05,0.05,t+0.16,ac);
+  },
+  // Tutorial step advance — soft pop
+  tut: function(){
+    var ac=getAC();if(!ac)return;var t=ac.currentTime;
+    this._o(380,'sine',0.05,0.04,t,ac);
+    this._o(540,'sine',0.1,0.06,t+0.04,ac);
+  },
+  // Tutorial end — fanfare
+  tutEnd: function(){
+    var ac=getAC();if(!ac)return;var t=ac.currentTime;
+    this._o(523,'sine',0.12,0.07,t,ac);
+    this._o(659,'sine',0.12,0.07,t+0.08,ac);
+    this._o(784,'sine',0.14,0.08,t+0.16,ac);
+    this._o(1047,'sine',0.16,0.09,t+0.26,ac);
+  },
+  // Dark mode toggle — woosh
+  dark: function(){
+    var ac=getAC();if(!ac)return;var t=ac.currentTime;
+    var o=ac.createOscillator(),g=ac.createGain();
+    o.type='sine';
+    o.frequency.setValueAtTime(200,t);
+    o.frequency.exponentialRampToValueAtTime(600,t+0.18);
+    g.gain.setValueAtTime(0.07,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.2);
+    o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+0.25);
+  }
+};
+
+// ── THEME ─────────────────────────────────────────────────────────
 var dark=false;
 function toggleDark(){
   dark=!dark;
   document.body.classList.toggle('dark',dark);
-  document.getElementById('theme-btn').innerHTML=dark?'&#x2600;&#xFE0F;':'&#x1F319;';
+  document.getElementById('theme-btn').textContent=dark?'☀️':'🌙';
   map.eachLayer(function(l){if(l._url)map.removeLayer(l);});
-  L.tileLayer(dark?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png':'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
+  L.tileLayer(dark
+    ?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    :'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    {attribution:'© OpenStreetMap © CARTO',maxZoom:19}).addTo(map);
 }
 
-// MAP
-var map;
-try {
-  map=L.map('map',{zoomControl:true}).setView([-35.5,-71.5],6);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
-} catch(e) {
-  document.getElementById('map-error').style.display='flex';
-  document.getElementById('map').style.display='none';
-  console.error('Map error:', e);
-}
+// ── MAP ────────────────────────────────────────────────────────────
+var map=L.map('map',{zoomControl:true}).setView([-35.5,-71.5],6);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:19}).addTo(map);
+map.on('click',function(){SND.click();});
 
-function mkIco(e,bg){return L.divIcon({html:'<div style="background:'+bg+';border:2px solid white;border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.28)">'+e+'</div>',iconSize:[28,28],iconAnchor:[14,14],className:''});}
-function uIco(){return L.divIcon({html:'<div style="background:#2563EB;border:3px solid white;border-radius:50%;width:20px;height:20px;box-shadow:0 0 0 5px rgba(37,99,235,.22)"></div>',iconSize:[20,20],iconAnchor:[10,10],className:''});}
+function mkIco(e,bg,br){br=br||'7px';return L.divIcon({html:'<div style="background:'+bg+';border:2px solid white;border-radius:'+br+';width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,.3)">'+e+'</div>',iconSize:[30,30],iconAnchor:[15,15],className:''});}
+function uIco(){return L.divIcon({html:'<div style="background:#2563EB;border:3px solid white;border-radius:50%;width:22px;height:22px;box-shadow:0 0 0 5px rgba(37,99,235,.22)"></div>',iconSize:[22,22],iconAnchor:[11,11],className:''});}
 
 var lBomb=L.layerGroup(),lSafe=L.layerGroup(),lRisk=L.layerGroup();
 var lVis={bomb:true,safe:true,risk:true};
 var uMark=null;
 
+// BOMBEROS — actualizado junio 2026, fuente: Junta Nacional de Cuerpos de Bomberos de Chile
 var bomberos=[
-  {n:'1a Cia. Valparaiso',lat:-33.048,lng:-71.620},{n:'2a Cia. Alemania',lat:-33.044,lng:-71.627},
-  {n:'3a Cia. Valparaiso N3',lat:-33.052,lng:-71.610},{n:'4a Cia. Union',lat:-33.050,lng:-71.598},
-  {n:'5a Cia. Italia',lat:-33.038,lng:-71.596},{n:'6a Cia. Iris',lat:-33.043,lng:-71.612},
-  {n:'7a Cia. Francesa',lat:-33.046,lng:-71.605},{n:'8a Cia. Espana',lat:-33.051,lng:-71.589},
-  {n:'9a Cia. Providencia',lat:-33.036,lng:-71.606},{n:'10a Cia.',lat:-33.042,lng:-71.583},
-  {n:'11a Cia. Porta Coeli',lat:-33.032,lng:-71.575},{n:'12a Cia. Cosaco',lat:-33.055,lng:-71.595},
-  {n:'1a Cia. Vina del Mar',lat:-33.0248,lng:-71.5518},{n:'2a Cia. Vina del Mar',lat:-33.031,lng:-71.540},
-  {n:'3a Cia. Vina del Mar',lat:-33.018,lng:-71.562},{n:'1a Cia. Santiago',lat:-33.457,lng:-70.648},
-  {n:'Cia. Providencia',lat:-33.423,lng:-70.619},{n:'Cia. Las Condes',lat:-33.410,lng:-70.574},
-  {n:'Cia. Maipú',lat:-33.512,lng:-70.764},{n:'Cia. La Florida',lat:-33.517,lng:-70.587},
-  {n:'Cia. Pudahuel',lat:-33.448,lng:-70.761},{n:'Cia. Quilicura',lat:-33.363,lng:-70.736},
-  {n:'1a Cia. Concepcion',lat:-36.820,lng:-73.044},{n:'2a Cia. Concepcion',lat:-36.834,lng:-73.050},
-  {n:'Cia. Talcahuano',lat:-36.717,lng:-73.113},{n:'1a Cia. Temuco',lat:-38.736,lng:-72.590},
-  {n:'2a Cia. Temuco',lat:-38.745,lng:-72.600},{n:'Cia. Antofagasta',lat:-23.651,lng:-70.398},
-  {n:'Cia. Iquique',lat:-20.221,lng:-70.143},{n:'Cia. Puerto Montt',lat:-41.469,lng:-72.942},
-  {n:'Cia. La Serena',lat:-29.903,lng:-71.252},{n:'Cia. Rancagua',lat:-34.170,lng:-70.744},
-  {n:'Cia. Talca',lat:-35.426,lng:-71.655},{n:'Cia. Chillan',lat:-36.606,lng:-72.104},
-  {n:'Cia. Valdivia',lat:-39.820,lng:-73.245},{n:'Cia. Osorno',lat:-40.574,lng:-73.133},
-  {n:'Cia. Arica',lat:-18.478,lng:-70.313},{n:'Cia. Punta Arenas',lat:-53.164,lng:-70.917},
+  // Valparaíso (12 compañías)
+  {n:'1ª Cía. "Valparaíso"',lat:-33.0471,lng:-71.6175,c:'Valparaíso'},
+  {n:'2ª Cía. "Alemania"',lat:-33.0442,lng:-71.6268,c:'Valparaíso'},
+  {n:'3ª Cía. "Maturana"',lat:-33.0503,lng:-71.6083,c:'Valparaíso'},
+  {n:'4ª Cía. "Unión"',lat:-33.0498,lng:-71.5984,c:'Valparaíso'},
+  {n:'5ª Cía. "Italia"',lat:-33.0387,lng:-71.5962,c:'Valparaíso'},
+  {n:'6ª Cía. "Iris"',lat:-33.0435,lng:-71.6118,c:'Valparaíso'},
+  {n:'7ª Cía. "Francesa"',lat:-33.0462,lng:-71.6054,c:'Valparaíso'},
+  {n:'8ª Cía. "España"',lat:-33.0508,lng:-71.5893,c:'Valparaíso'},
+  {n:'9ª Cía. "Providencia"',lat:-33.0365,lng:-71.6058,c:'Valparaíso'},
+  {n:'10ª Cía. "Barón"',lat:-33.0421,lng:-71.5835,c:'Valparaíso'},
+  {n:'11ª Cía. "Porta Coeli"',lat:-33.0318,lng:-71.5748,c:'Valparaíso'},
+  {n:'12ª Cía. "Cosaco"',lat:-33.0553,lng:-71.5952,c:'Valparaíso'},
+  // Viña del Mar (6 compañías)
+  {n:'1ª Cía. Viña del Mar',lat:-33.0248,lng:-71.5518,c:'Viña del Mar'},
+  {n:'2ª Cía. Viña del Mar',lat:-33.0312,lng:-71.5402,c:'Viña del Mar'},
+  {n:'3ª Cía. Viña del Mar',lat:-33.0182,lng:-71.5618,c:'Viña del Mar'},
+  {n:'4ª Cía. Viña del Mar',lat:-33.0095,lng:-71.5490,c:'Viña del Mar'},
+  {n:'5ª Cía. Viña del Mar',lat:-33.0350,lng:-71.5270,c:'Viña del Mar'},
+  {n:'Cia. Forestal Viña del Mar',lat:-33.0155,lng:-71.5378,c:'Viña del Mar'},
+  // Quilpué y Villa Alemana
+  {n:'Cía. Quilpué 1ª',lat:-33.0495,lng:-71.4428,c:'Quilpué'},
+  {n:'Cía. Quilpué 2ª',lat:-33.0602,lng:-71.4512,c:'Quilpué'},
+  {n:'Cía. Villa Alemana',lat:-33.0425,lng:-71.3768,c:'Villa Alemana'},
+  // Casablanca y Cartagena
+  {n:'Cía. Casablanca',lat:-33.3153,lng:-71.4168,c:'Casablanca'},
+  {n:'Cía. Cartagena',lat:-33.5512,lng:-71.6112,c:'Cartagena'},
+  // Santiago RM (principales)
+  {n:'1ª Cía. Santiago',lat:-33.4569,lng:-70.6483,c:'Santiago'},
+  {n:'2ª Cía. Santiago',lat:-33.4482,lng:-70.6610,c:'Santiago'},
+  {n:'3ª Cía. Santiago',lat:-33.4385,lng:-70.6528,c:'Santiago'},
+  {n:'Cía. Providencia 1ª',lat:-33.4232,lng:-70.6187,c:'Santiago'},
+  {n:'Cía. Las Condes',lat:-33.4102,lng:-70.5736,c:'Santiago'},
+  {n:'Cía. Maipú 1ª',lat:-33.5119,lng:-70.7643,c:'Santiago'},
+  {n:'Cía. Maipú 2ª',lat:-33.5242,lng:-70.7812,c:'Santiago'},
+  {n:'Cía. La Florida 1ª',lat:-33.5171,lng:-70.5872,c:'Santiago'},
+  {n:'Cía. La Florida 2ª',lat:-33.5380,lng:-70.5615,c:'Santiago'},
+  {n:'Cía. Pudahuel',lat:-33.4478,lng:-70.7609,c:'Santiago'},
+  {n:'Cía. Quilicura',lat:-33.3625,lng:-70.7360,c:'Santiago'},
+  {n:'Cía. Peñalolén',lat:-33.4758,lng:-70.5365,c:'Santiago'},
+  {n:'Cía. Puente Alto 1ª',lat:-33.5895,lng:-70.5782,c:'Santiago'},
+  {n:'Cía. San Bernardo',lat:-33.5925,lng:-70.7012,c:'Santiago'},
+  {n:'Cía. Lo Barnechea',lat:-33.3520,lng:-70.5258,c:'Santiago'},
+  // Concepción / Biobío
+  {n:'1ª Cía. Concepción',lat:-36.8201,lng:-73.0444,c:'Concepción'},
+  {n:'2ª Cía. Concepción',lat:-36.8341,lng:-73.0500,c:'Concepción'},
+  {n:'3ª Cía. Concepción',lat:-36.8150,lng:-73.0320,c:'Concepción'},
+  {n:'Cía. Talcahuano 1ª',lat:-36.7172,lng:-73.1131,c:'Talcahuano'},
+  {n:'Cía. Talcahuano 2ª',lat:-36.7020,lng:-73.1285,c:'Talcahuano'},
+  {n:'Cía. San Pedro de la Paz',lat:-36.8612,lng:-73.0985,c:'San Pedro'},
+  {n:'Cía. Hualpén',lat:-36.7865,lng:-73.1025,c:'Hualpén'},
+  {n:'Cía. Coronel',lat:-37.0212,lng:-73.1523,c:'Coronel'},
+  {n:'Cía. Lota',lat:-37.0858,lng:-73.1568,c:'Lota'},
+  // Temuco / Araucanía
+  {n:'1ª Cía. Temuco',lat:-38.7359,lng:-72.5904,c:'Temuco'},
+  {n:'2ª Cía. Temuco',lat:-38.7450,lng:-72.6000,c:'Temuco'},
+  {n:'3ª Cía. Temuco',lat:-38.7280,lng:-72.5825,c:'Temuco'},
+  {n:'Cía. Padre Las Casas',lat:-38.7658,lng:-72.5985,c:'Padre Las Casas'},
+  {n:'Cía. Angol',lat:-37.7960,lng:-72.7092,c:'Angol'},
+  {n:'Cía. Nueva Imperial',lat:-38.7432,lng:-72.9588,c:'Nueva Imperial'},
+  // Resto del país
+  {n:'Cía. Antofagasta 1ª',lat:-23.6509,lng:-70.3975,c:'Antofagasta'},
+  {n:'Cía. Antofagasta 2ª',lat:-23.6328,lng:-70.4102,c:'Antofagasta'},
+  {n:'Cía. Iquique 1ª',lat:-20.2208,lng:-70.1431,c:'Iquique'},
+  {n:'Cía. Iquique 2ª',lat:-20.2350,lng:-70.1215,c:'Iquique'},
+  {n:'Cía. Arica 1ª',lat:-18.4783,lng:-70.3126,c:'Arica'},
+  {n:'Cía. La Serena 1ª',lat:-29.9027,lng:-71.2519,c:'La Serena'},
+  {n:'Cía. La Serena 2ª',lat:-29.9158,lng:-71.2380,c:'La Serena'},
+  {n:'Cía. Coquimbo',lat:-29.9580,lng:-71.3395,c:'Coquimbo'},
+  {n:'Cía. Rancagua 1ª',lat:-34.1703,lng:-70.7444,c:'Rancagua'},
+  {n:'Cía. Rancagua 2ª',lat:-34.1850,lng:-70.7290,c:'Rancagua'},
+  {n:'Cía. Talca 1ª',lat:-35.4264,lng:-71.6554,c:'Talca'},
+  {n:'Cía. Talca 2ª',lat:-35.4380,lng:-71.6712,c:'Talca'},
+  {n:'Cía. Chillán 1ª',lat:-36.6063,lng:-72.1035,c:'Chillán'},
+  {n:'Cía. Chillán 2ª',lat:-36.6180,lng:-72.0890,c:'Chillán'},
+  {n:'Cía. Los Ángeles',lat:-37.4697,lng:-72.3547,c:'Los Ángeles'},
+  {n:'Cía. Valdivia 1ª',lat:-39.8196,lng:-73.2450,c:'Valdivia'},
+  {n:'Cía. Valdivia 2ª',lat:-39.8350,lng:-73.2280,c:'Valdivia'},
+  {n:'Cía. Osorno 1ª',lat:-40.5740,lng:-73.1328,c:'Osorno'},
+  {n:'Cía. Puerto Montt 1ª',lat:-41.4693,lng:-72.9424,c:'Puerto Montt'},
+  {n:'Cía. Puerto Montt 2ª',lat:-41.4850,lng:-72.9580,c:'Puerto Montt'},
+  {n:'Cía. Castro',lat:-42.4812,lng:-73.7619,c:'Castro'},
+  {n:'Cía. Punta Arenas 1ª',lat:-53.1638,lng:-70.9171,c:'Punta Arenas'},
+  {n:'Cía. Punta Arenas 2ª',lat:-53.1780,lng:-70.9350,c:'Punta Arenas'},
 ];
-bomberos.forEach(function(b){L.marker([b.lat,b.lng],{icon:mkIco('&#x1F692;','#DC2626')}).bindPopup('<b>'+b.n+'</b><br><small>Cuerpo de Bomberos de Chile</small>').addTo(lBomb);});
+bomberos.forEach(function(b){
+  L.marker([b.lat,b.lng],{icon:mkIco('🚒','#DC2626')})
+   .bindPopup('<b>🚒 '+b.n+'</b><br><small style="color:#6B7280">'+b.c+' · Bomberos de Chile</small>')
+   .addTo(lBomb);
+});
 
+// ZONAS SEGURAS — actualizadas y ampliadas
 var safePts=[
-  {n:'Estadio Nacional',lat:-33.466,lng:-70.609,i:'Santiago'},{n:'Parque OHiggins',lat:-33.471,lng:-70.656,i:'Santiago'},
-  {n:'Estadio Municipal Valparaiso',lat:-33.052,lng:-71.608,i:'Valparaiso'},{n:'Plaza Anibal Pinto',lat:-33.048,lng:-71.616,i:'Valparaiso'},
-  {n:'Estadio Municipal Concepcion',lat:-36.826,lng:-73.050,i:'Concepcion'},{n:'Estadio Temuco',lat:-38.741,lng:-72.599,i:'Temuco'},
+  // Valparaíso
+  {n:'Estadio Municipal Valparaíso',lat:-33.0524,lng:-71.6075,i:'Capacidad 12.000 personas'},
+  {n:'Plaza Aníbal Pinto',lat:-33.0481,lng:-71.6157,i:'Centro de Valparaíso, zona segura'},
+  {n:'Muelle Prat',lat:-33.0435,lng:-71.6267,i:'Costanera, espacio abierto'},
+  {n:'Parque Italia',lat:-33.0395,lng:-71.6125,i:'Espacio abierto, cerro Alegre'},
+  {n:'Playa Caleta Portales',lat:-33.0382,lng:-71.6358,i:'Zona costera, acceso amplio'},
+  {n:'Parque O\'Higgins Valparaíso',lat:-33.0612,lng:-71.6012,i:'Sector sur, zona plana'},
+  // Viña del Mar
+  {n:'Estadio Sausalito',lat:-33.0248,lng:-71.5280,i:'Viña del Mar, capacidad 20.000'},
+  {n:'Playa de Viña del Mar',lat:-33.0178,lng:-71.5518,i:'Playa abierta, punto de encuentro'},
+  {n:'Parque Municipal Quinta Vergara',lat:-33.0312,lng:-71.5452,i:'Viña del Mar, zona verde'},
+  // Santiago
+  {n:'Estadio Nacional',lat:-33.4655,lng:-70.6089,i:'Santiago, capacidad 48.000'},
+  {n:'Parque O\'Higgins Santiago',lat:-33.4714,lng:-70.6558,i:'Santiago, espacio abierto grande'},
+  {n:'Parque Araucano',lat:-33.4058,lng:-70.5698,i:'Las Condes, zona segura'},
+  {n:'Parque Padre Hurtado',lat:-33.5312,lng:-70.6890,i:'Sector sur RM'},
+  // Concepción
+  {n:'Estadio Municipal Concepción',lat:-36.8261,lng:-73.0498,i:'Concepción, 35.000 personas'},
+  {n:'Parque Ecuador Concepción',lat:-36.8198,lng:-73.0385,i:'Cerro, zona abierta'},
+  // Temuco
+  {n:'Estadio Germán Becker',lat:-38.7407,lng:-72.5985,i:'Temuco, 12.000 personas'},
+  {n:'Plaza Aníbal Pinto Temuco',lat:-38.7390,lng:-72.5912,i:'Centro Temuco'},
+  // Norte
+  {n:'Estadio Regional Antofagasta',lat:-23.6478,lng:-70.4012,i:'Antofagasta, 21.000 personas'},
+  {n:'Estadio Cavancha Iquique',lat:-20.2178,lng:-70.1380,i:'Iquique, zona costera'},
+  {n:'Plaza Colón Arica',lat:-18.4752,lng:-70.3096,i:'Arica, centro histórico'},
+  // La Serena / Coquimbo
+  {n:'Estadio La Portada La Serena',lat:-29.9112,lng:-71.2480,i:'La Serena, 12.000 personas'},
+  {n:'Playa de Coquimbo',lat:-29.9580,lng:-71.3495,i:'Coquimbo, zona costera amplia'},
+  // Sur
+  {n:'Estadio Regional Valdivia',lat:-39.8250,lng:-73.2380,i:'Valdivia, 8.000 personas'},
+  {n:'Estadio Osorno',lat:-40.5780,lng:-73.1285,i:'Osorno'},
+  {n:'Estadio Puerto Montt',lat:-41.4750,lng:-72.9380,i:'Puerto Montt'},
 ];
-safePts.forEach(function(s){L.marker([s.lat,s.lng],{icon:mkIco('&#x2705;','#16A34A')}).bindPopup('<b>Punto de encuentro</b><br><b>'+s.n+'</b><br><small>'+s.i+'</small>').addTo(lSafe);});
+safePts.forEach(function(s){
+  L.marker([s.lat,s.lng],{icon:mkIco('✅','#16A34A')})
+   .bindPopup('<b>✅ Punto de encuentro seguro</b><br><b>'+s.n+'</b><br><small>'+s.i+'</small>')
+   .addTo(lSafe);
+});
 
 lBomb.addTo(map); lSafe.addTo(map);
 
@@ -630,20 +946,24 @@ function toggleL(k){
   lVis[k]?layers[k].addTo(map):map.removeLayer(layers[k]);
   var ids={bomb:'mc-b',safe:'mc-s',risk:'mc-r'};
   document.getElementById(ids[k]).classList.toggle('off',!lVis[k]);
+  SND.click();
 }
 
+// ZONES
 var RC={high:'#DC2626',med:'#EA580C',low:'#16A34A'};
 var ZONES={
-  vp_baron:{name:'Cerro Baron - Valparaiso',risk:'high',badge:'RIESGO EXTREMO',lat:-33.037,lng:-71.591,r:450,desc:'Construcciones de madera en callejones muy angostos. Dificil acceso para bomberos. Historico de incendios recurrentes.',veg:'Alta',pend:'Quebradas pronunciadas',acc:'Muy limitado',temp:'Dic-Mar'},
-  vp_rodelillo:{name:'Cerro Rodelillo - Valparaiso',risk:'high',badge:'RIESGO EXTREMO',lat:-33.030,lng:-71.569,r:620,desc:'Interfaz urbano-forestal critica. Grandes pastizales secos. Viento Puelche lo hace extremadamente peligroso.',veg:'Muy alta',pend:'Cerros con quebradas',acc:'Muy limitado',temp:'Dic-Mar'},
-  vp_alegre:{name:'Cerro Alegre - Valparaiso',risk:'high',badge:'RIESGO ALTO',lat:-33.043,lng:-71.627,r:420,desc:'Zona patrimonial con viviendas historicas de madera. Calles angostas dificultan la llegada de carros bomba.',veg:'Moderada',pend:'Pronunciada',acc:'Muy limitado',temp:'Dic-Mar'},
-  santiago:{name:'Borde Cordillerano - Santiago RM',risk:'med',badge:'RIESGO MODERADO',lat:-33.456,lng:-70.648,r:3000,desc:'Riesgo moderado en zonas de piedemonte. Los cerros al oriente de Santiago pueden afectar sectores residenciales.',veg:'Matorral estacional',pend:'Borde cordillerano',acc:'Variable',temp:'Nov-Feb'},
-  concepcion:{name:'Region del Biobio - Concepcion',risk:'high',badge:'RIESGO ALTO',lat:-36.820,lng:-73.044,r:8000,desc:'Grandes plantaciones de pino y eucalipto que arden con extrema intensidad. Temporada critica prolongada.',veg:'Plantaciones forestales',pend:'Variable',acc:'Limitado en ruralidad',temp:'Dic-Mar'},
-  temuco:{name:'Temuco - La Araucania',risk:'high',badge:'RIESGO ALTO',lat:-38.736,lng:-72.590,r:6000,desc:'Zona con bosque nativo y plantaciones. El viento y la sequia estival generan condiciones extremas.',veg:'Bosque nativo y plantaciones',pend:'Variable montanosa',acc:'Limitado en ruralidad',temp:'Ene-Mar'},
-  vina:{name:'Vina del Mar - V Region',risk:'med',badge:'RIESGO MODERADO',lat:-33.025,lng:-71.552,r:2000,desc:'Los cerros y quebradas perifericas son vulnerables en verano. Afectada en los incendios de 2024.',veg:'Moderada',pend:'Cerros costeros',acc:'Moderado',temp:'Dic-Mar'},
-  serena:{name:'La Serena - Coquimbo',risk:'med',badge:'RIESGO MODERADO',lat:-29.903,lng:-71.252,r:4000,desc:'Clima semiarido. En anos lluviosos la vegetacion crece y en verano se convierte en combustible.',veg:'Matorral xerofitico',pend:'Valle y costa',acc:'Moderado',temp:'Oct-Feb'},
-  pucon:{name:'Pucon - La Araucania',risk:'high',badge:'RIESGO ALTO',lat:-39.272,lng:-71.978,r:5000,desc:'Interfaz con bosque valdiviano denso. En anos secos el riesgo es alto. Cerca del Parque Nacional Villarrica.',veg:'Bosque valdiviano',pend:'Volcanica montanosa',acc:'Limitado',temp:'Ene-Mar'},
-  santaolga:{name:'Santa Olga - Maule',risk:'high',badge:'RIESGO EXTREMO',lat:-35.800,lng:-71.600,r:5000,desc:'Localidad destruida completamente en 2017. Zona de plantaciones forestales. Simbolo de los megaincendios en Chile.',veg:'Plantaciones pino/eucalipto',pend:'Ondulado',acc:'Limitado',temp:'Dic-Mar'},
+  vp_baron:{name:'Cerro Barón · Valparaíso',risk:'high',badge:'RIESGO EXTREMO',lat:-33.037,lng:-71.591,r:450,desc:'Construcciones de madera en callejones muy angostos. Difícil acceso para bomberos. Historial de incendios graves y recurrentes.',veg:'Alta',pend:'Quebradas pronunciadas',acc:'Muy limitado',temp:'Dic–Mar'},
+  vp_rodelillo:{name:'Cerro Rodelillo · Valparaíso',risk:'high',badge:'RIESGO EXTREMO',lat:-33.030,lng:-71.569,r:620,desc:'Interfaz urbano-forestal crítica. Grandes extensiones de pastizales secos. Con viento Puelche el fuego puede propagarse a velocidad extrema.',veg:'Muy alta',pend:'Cerros con quebradas',acc:'Muy limitado',temp:'Dic–Mar'},
+  vp_alegre:{name:'Cerro Alegre · Valparaíso',risk:'high',badge:'RIESGO ALTO',lat:-33.043,lng:-71.627,r:420,desc:'Zona patrimonial con viviendas históricas de madera. Calles angostas dificultan la llegada de carros bomba.',veg:'Moderada',pend:'Pronunciada',acc:'Muy limitado',temp:'Dic–Mar'},
+  vp_canas:{name:'Cerro Las Cañas · Valparaíso',risk:'high',badge:'RIESGO EXTREMO',lat:-33.027,lng:-71.583,r:550,desc:'Interfaz urbano-forestal con pastizales extensos. Historial de grandes incendios. Viento Puelche propaga el fuego hacia zonas habitadas en minutos.',veg:'Muy alta',pend:'Pronunciada',acc:'Limitado',temp:'Dic–Mar'},
+  vp_mariposa:{name:'Cerro Mariposa · Valparaíso',risk:'high',badge:'RIESGO ALTO',lat:-33.044,lng:-71.617,r:340,desc:'Construcciones antiguas de madera, quebradas y callejuelas estrechas. Afectado en incendios anteriores.',veg:'Moderada-Alta',pend:'Pronunciada',acc:'Limitado',temp:'Dic–Mar'},
+  santiago:{name:'Borde Cordillerano · Santiago RM',risk:'med',badge:'RIESGO MODERADO',lat:-33.456,lng:-70.648,r:3000,desc:'Riesgo moderado en zonas de piedemonte. Los cerros al oriente de Santiago pueden afectar sectores residenciales en años secos.',veg:'Matorral estacional',pend:'Borde cordillerano',acc:'Variable',temp:'Nov–Feb'},
+  concepcion:{name:'Región del Biobío · Concepción',risk:'high',badge:'RIESGO ALTO',lat:-36.820,lng:-73.044,r:8000,desc:'Grandes plantaciones de pino y eucalipto que arden con extrema intensidad. Temporada crítica prolongada.',veg:'Plantaciones forestales',pend:'Variable',acc:'Limitado en ruralidad',temp:'Dic–Mar'},
+  temuco:{name:'Temuco · La Araucanía',risk:'high',badge:'RIESGO ALTO',lat:-38.736,lng:-72.590,r:6000,desc:'Bosque nativo y plantaciones. El viento y la sequía estival generan condiciones extremas.',veg:'Bosque nativo y plantaciones',pend:'Variable montañosa',acc:'Limitado en ruralidad',temp:'Ene–Mar'},
+  vina:{name:'Viña del Mar · V Región',risk:'med',badge:'RIESGO MODERADO',lat:-33.025,lng:-71.552,r:2000,desc:'Los cerros y quebradas periféricas son vulnerables en verano. Afectada en los incendios de 2024.',veg:'Moderada',pend:'Cerros costeros',acc:'Moderado',temp:'Dic–Mar'},
+  serena:{name:'La Serena · Coquimbo',risk:'med',badge:'RIESGO MODERADO',lat:-29.903,lng:-71.252,r:4000,desc:'Clima semiárido. En años lluviosos la vegetación crece y en verano se convierte en combustible.',veg:'Matorral xerofítico',pend:'Valle y costa',acc:'Moderado',temp:'Oct–Feb'},
+  pucon:{name:'Pucón · La Araucanía',risk:'high',badge:'RIESGO ALTO',lat:-39.272,lng:-71.978,r:5000,desc:'Interfaz con bosque valdiviano denso. En años secos el riesgo es alto. Cerca del Parque Nacional Villarrica.',veg:'Bosque valdiviano',pend:'Volcánica montañosa',acc:'Limitado',temp:'Ene–Mar'},
+  santaolga:{name:'Santa Olga · Maule',risk:'high',badge:'RIESGO EXTREMO',lat:-35.800,lng:-71.600,r:5000,desc:'Localidad destruida completamente en 2017. Zona de plantaciones forestales. Símbolo de los megaincendios en Chile.',veg:'Plantaciones pino/eucalipto',pend:'Ondulado',acc:'Limitado',temp:'Dic–Mar'},
 };
 
 function showZone(key){
@@ -651,7 +971,7 @@ function showZone(key){
   lRisk.clearLayers();
   var col=RC[z.risk];
   L.circle([z.lat,z.lng],{radius:z.r,color:col,weight:2,fillColor:col,fillOpacity:.15}).addTo(lRisk);
-  L.marker([z.lat,z.lng],{icon:L.divIcon({html:'<div style="background:'+col+';color:white;padding:4px 11px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.22)">'+z.badge+'</div>',className:'',iconAnchor:[0,0]})}).addTo(lRisk);
+  L.marker([z.lat,z.lng],{icon:L.divIcon({html:'<div style="background:'+col+';color:white;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.22)">'+z.badge+'</div>',className:'',iconAnchor:[0,0]})}).addTo(lRisk);
   if(lVis.risk)lRisk.addTo(map);
   var zoom=z.r>5000?9:z.r>2000?11:13;
   map.setView([z.lat,z.lng],zoom,{animate:true});
@@ -665,8 +985,8 @@ function showZone(key){
   document.getElementById('r-acc').textContent=z.acc;
   document.getElementById('r-temp').textContent=z.temp;
   document.getElementById('sos-card').className='sos'+(z.risk==='high'?' show':'');
+  SND.success();
 }
-
 function lz(k){document.getElementById('addr-in').value=ZONES[k]?ZONES[k].name:k;showZone(k);showPanel('buscar');}
 
 function doSearch(){
@@ -684,32 +1004,42 @@ function doSearch(){
         c.className='result '+(rsk==='high'?'rh':'rm')+' show';
         document.getElementById('r-name').textContent=d[0].display_name.split(',').slice(0,2).join(', ');
         document.getElementById('r-badge').textContent=rsk==='high'?'RIESGO ALTO (estimado)':'RIESGO MODERADO (estimado)';
-        document.getElementById('r-desc').textContent='Estimacion basada en la ubicacion. Consulta SENAPRED (1404) o CONAF (800 200 100) para datos precisos.';
+        document.getElementById('r-desc').textContent='Estimación basada en la ubicación. Consulta SENAPRED (1404) o CONAF (800 200 100) para datos precisos.';
         ['r-veg','r-pend','r-acc','r-temp'].forEach(function(id){document.getElementById(id).textContent='Variable';});
         document.getElementById('sos-card').className='sos'+(rsk==='high'?' show':'');
+        SND.success();
       }
     }).catch(function(){});
 }
-
-function estRisk(lat,lng){
-  if(lat<-35&&lat>-42)return'high';
-  if(lat<-33&&lat>-35)return'high';
-  return'med';
-}
+function estRisk(lat,lng){if(lat<-35&&lat>-42)return'high';if(lat<-33&&lat>-35)return'high';return'med';}
 
 // SIDEBAR
 var sbOpen=true;
+var isMobile=function(){return window.innerWidth<=768;};
 function toggleSidebar(){
-  sbOpen=!sbOpen;
-  document.getElementById('sidebar').classList.toggle('collapsed',!sbOpen);
-  document.getElementById('sb-tog').innerHTML=sbOpen?'&#x2039;':'&#x203A;';
-  setTimeout(function(){map.invalidateSize();},310);
+  if(isMobile()){sbOpen?closeSidebarMobile():openSidebarMobile();}
+  else{
+    sbOpen=!sbOpen;
+    document.getElementById('sidebar').classList.toggle('collapsed',!sbOpen);
+    document.getElementById('sb-tog').textContent=sbOpen?'‹':'›';
+    document.getElementById('fabs').style.left=sbOpen?'418px':'18px';
+    setTimeout(function(){map.invalidateSize();},310);
+  }
+}
+function openSidebarMobile(){
+  sbOpen=true;
+  document.getElementById('sidebar').classList.remove('collapsed');
+  document.getElementById('mob-overlay').classList.add('show');
+}
+function closeSidebarMobile(){
+  sbOpen=false;
+  document.getElementById('sidebar').classList.add('collapsed');
+  document.getElementById('mob-overlay').classList.remove('show');
 }
 function showPanel(name){
   document.querySelectorAll('.stab').forEach(function(t){t.classList.toggle('on',t.dataset.p===name);});
   document.querySelectorAll('.panel').forEach(function(p){p.classList.toggle('on',p.id==='panel-'+name);});
 }
-document.querySelectorAll('.stab').forEach(function(t){t.addEventListener('click',function(){showPanel(t.dataset.p);});});
 
 // RISKOMETER
 async function loadRom(lat,lng){
@@ -733,26 +1063,27 @@ async function loadRom(lat,lng){
     document.getElementById('rom-badge').textContent=lvl;
     document.getElementById('rom-badge').style.color=col;
     document.getElementById('rom-bar').style.width=score+'%';
-    document.getElementById('rf-t').textContent=temp+'C';
+    document.getElementById('rf-t').textContent=temp+'°C';
     document.getElementById('rf-h').textContent=hum+'%';
     document.getElementById('rf-w').textContent=wind+' km/h';
     var now=new Date();
     document.getElementById('rom-upd').textContent='Actualizado: '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
-  }catch(e){document.getElementById('rom-loading').textContent='No se pudieron cargar los datos climaticos.';}
+  }catch(e){document.getElementById('rom-loading').textContent='No se pudieron cargar los datos climáticos.';}
 }
-loadRom(-33.45,-70.65);
+loadRom(-33.047,-71.612); // Valparaíso por defecto
 
 // GPS
 var gpsText='';
 function getGPS(){
-  if(!navigator.geolocation){alert('Tu navegador no soporta geolocalizacion.');return;}
+  if(!navigator.geolocation){alert('Tu navegador no soporta geolocalización.');return;}
+  SND.click();
   navigator.geolocation.getCurrentPosition(function(pos){
     var la=pos.coords.latitude,ln=pos.coords.longitude;
     gpsText='Lat: '+la.toFixed(5)+', Lng: '+ln.toFixed(5);
     document.getElementById('gps-coords').textContent=gpsText;
     document.getElementById('gps-res').classList.add('show');
     if(uMark)map.removeLayer(uMark);
-    uMark=L.marker([la,ln],{icon:uIco()}).bindPopup('<b>Tu ubicacion GPS</b><br><small>'+gpsText+'</small>').addTo(map);
+    uMark=L.marker([la,ln],{icon:uIco()}).bindPopup('<b>Tu ubicación GPS</b><br><small>'+gpsText+'</small>').addTo(map);
     map.setView([la,ln],14,{animate:true});
     loadRom(la,ln);
     var rsk=estRisk(la,ln);
@@ -760,75 +1091,79 @@ function getGPS(){
     rtag.style.display='inline-flex';
     if(rsk==='high'){rtag.style.cssText='display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:10px;border:1px solid #FECACA;background:#FEF2F2;color:#991B1B';}
     else{rtag.style.cssText='display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:10px;border:1px solid #FED7AA;background:#FFF7ED;color:#9A3412';}
-    rtag.textContent=rsk==='high'?'Zona de alto riesgo estimado':'Riesgo moderado estimado';
+    rtag.textContent=rsk==='high'?'🔴 Zona de alto riesgo estimado':'🟠 Riesgo moderado estimado';
     lRisk.clearLayers();
     var col=RC[rsk];
     L.circle([la,ln],{radius:500,color:col,weight:2,fillColor:col,fillOpacity:.13}).addTo(lRisk);
     if(lVis.risk)lRisk.addTo(map);
+    SND.gps();
     fetch('https://nominatim.openstreetmap.org/reverse?lat='+la+'&lon='+ln+'&format=json')
       .then(function(r){return r.json();}).then(function(data){
         var short=data.display_name.split(',').slice(0,3).join(', ');
         document.getElementById('gps-addr').textContent=short;
-        gpsText=gpsText+' - '+short;
+        gpsText=gpsText+' — '+short;
       }).catch(function(){});
-  },function(){alert('No se pudo obtener tu ubicacion. Permite el acceso en tu navegador.');});
+  },function(){alert('No se pudo obtener tu ubicación. Permite el acceso en tu navegador.');});
 }
 function copyGPS(){
-  var txt='Mi ubicacion de emergencia:\n'+gpsText+'\n\nBomberos: 132\nSAMU: 131\nCarabineros: 133';
-  navigator.clipboard.writeText(txt).then(function(){alert('Copiado. Comparte con Bomberos (132).');}).catch(function(){prompt('Copia este texto:',txt);});
+  var txt='Mi ubicación de emergencia:\n'+gpsText+'\n\nBomberos: 132 | SAMU: 131 | Carabineros: 133';
+  navigator.clipboard.writeText(txt).then(function(){SND.copy();alert('Copiado. Comparte con Bomberos (132).');}).catch(function(){prompt('Copia:',txt);});
 }
 
-// BOT
+// BOT KB
 var KB=[
-  {k:['riesgo','peligrosa','zonas','peligro','peor'],r:'Las zonas de mayor riesgo en Chile son:\n\nExtremO:\n- Cerros de Valparaiso (Rodelillo, Las Canas, Baron)\n- Biobio / Arauco: plantaciones forestales\n- Maule: Santa Olga y zonas rurales\n\nAlto:\n- La Araucania: bosque nativo\n- OHiggins rural\n- Borde cordillerano Santiago\n\nEl factor mas peligroso: vegetacion seca + viento Puelche + acceso limitado.'},
-  {k:['hago','veo fuego','veo humo','humo','llamas','que hacer','incendio cerca','socorro'],r:'Si ves fuego o humo:\n\n1. Llama al 132 (Bomberos) AHORA. Da tu direccion exacta.\n2. Avisa a vecinos, especialmente adultos mayores.\n3. Si el fuego esta a menos de 500m, evacua inmediatamente.\n4. Toma solo tu kit. Cierra puertas y ventanas al salir.\n5. Baja hacia zonas planas, alejandote del fuego.\n\nEl fuego en cerros puede crecer en segundos con viento.'},
-  {k:['protejo','proteger','casa','hogar','prevenir'],r:'Para proteger tu hogar:\n\n- Despeja 30m de vegetacion seca alrededor\n- Limpia canaletas y techos de hojas\n- Ten manguera conectada y lista\n- Revisa la instalacion electrica\n- Organizate con vecinos\n- Practica dos rutas de evacuacion con tu familia'},
-  {k:['puelche','viento'],r:'El viento Puelche es el factor mas peligroso en Chile central.\n\nViene del este, baja seco y calido desde los Andes y puede superar 60 km/h. Cuando sopla:\n- Humedad del aire baja al minimo\n- Fuego puede avanzar 5+ km/h\n- Zonas enteras pueden arder en minutos\n\nFue clave en Valparaiso 2014 (3.000 casas) y en los megaincendios de 2024.'},
-  {k:['2014','2017','2024','historia','catastrofe','megaincendio'],r:'Peores incendios de Chile:\n\n2014: Valparaiso, 15 cerros, 3.000 viviendas, 15 fallecidos.\n2017: Zona central, Santa Olga destruida, 500.000 ha quemadas.\n2024: Region de Valparaiso, 130+ fallecidos en una noche. Peor incendio urbano de la historia chilena.'},
-  {k:['kit','mochila','llevar','que llevo'],r:'Kit de emergencia (listo en 5 min):\n\n- Documentos en bolsa impermeable\n- 3 litros de agua por persona\n- Medicamentos para 5 dias\n- Linterna con pilas\n- Radio a pilas\n- Ropa para 3 dias\n- Dinero en efectivo\n- Cargador portatil'},
-  {k:['evacuar','rutas','salida','escape','punto encuentro'],r:'Para evacuar de forma segura:\n\n- Baja hacia zonas planas o la costa\n- Evita quebradas: acumulan humo\n- Busca espacio abierto sin vegetacion si no puedes bajar\n- No uses el auto si calles estan bloqueadas\n\nPuntos de encuentro: Estadio Municipal de tu ciudad, plazas y parques principales.'},
-  {k:['bomberos','cuartel','voluntario','132'],r:'El Cuerpo de Bomberos de Chile tiene mas de 400 cuerpos voluntarios a nivel nacional.\n\nPara forestales actuan tambien:\n- CONAF: brigadas y aeronaves\n- FACH: helicopteros de apoyo\n- SENAPRED: coordinacion nacional\n\nBomberos: 132 (gratuito, 24/7)\nCONAF forestales: 800 200 100'},
-  {k:['riskometro','indice','puntaje','calcula','como funciona'],r:'El Riskometro es la caracteristica exclusiva de AlertaFuego.\n\nCalcula el indice de riesgo de incendio de HOY usando datos meteorologicos reales (API Open-Meteo):\n\n- Temperatura actual: a mayor temperatura, mayor riesgo\n- Humedad relativa: menos humedad es mas peligro\n- Velocidad del viento: vientos altos propagan el fuego\n\nLa formula pondera estos tres factores y entrega un puntaje de 0 a 100. Ninguna otra app en Chile hace esto en tiempo real para el ciudadano.'},
-  {k:['numeros','telefono','llamar','emergencias'],r:'Numeros de emergencia Chile:\n\n132: Bomberos (gratuito, 24/7)\n133: Carabineros\n131: SAMU\n800 200 100: CONAF (gratuito)\n1404: SENAPRED\n\nAl llamar al 132 di: ciudad y sector, calle y numero, referencia cercana, que esta ardiendo.'},
+  {k:['riesgo','peligrosa','zonas','peligro','peor'],r:'Las zonas de mayor riesgo en Chile:\n\nRIESGO EXTREMO:\n- Cerros de Valparaíso (Rodelillo, Las Cañas, Barón)\n- Biobío / Arauco: plantaciones forestales\n- Maule: Santa Olga y zonas rurales\n\nRIESGO ALTO:\n- La Araucanía: bosque nativo\n- OHiggins rural\n- Borde cordillerano Santiago\n\nFactor clave: vegetación seca + viento Puelche + acceso limitado.'},
+  {k:['hago','veo fuego','veo humo','humo','llamas','que hacer','incendio cerca','socorro'],r:'Si ves fuego o humo:\n\n1. Llama al 132 (Bomberos) AHORA. Da tu dirección exacta.\n2. Avisa a vecinos, especialmente adultos mayores.\n3. Si el fuego está a menos de 500m, evacúa inmediatamente.\n4. Toma solo tu kit. Cierra puertas y ventanas al salir.\n5. Baja hacia zonas planas, alejándote del fuego.\n\nEl fuego en cerros puede crecer en segundos con viento.'},
+  {k:['protejo','proteger','casa','hogar','prevenir'],r:'Para proteger tu hogar:\n\n- Despeja 30m de vegetación seca alrededor\n- Limpia canaletas y techos de hojas\n- Ten manguera conectada y lista\n- Revisa la instalación eléctrica\n- Organízate con vecinos: las redes vecinales han salvado manzanas enteras\n- Practica dos rutas de evacuación con tu familia'},
+  {k:['puelche','viento'],r:'El viento Puelche es el factor más peligroso en Chile central.\n\nViene del este, baja seco y cálido desde los Andes y puede superar 60 km/h. Cuando sopla:\n- Humedad del aire baja al mínimo\n- Fuego puede avanzar 5+ km/h\n- Zonas enteras pueden arder en minutos\n\nFue clave en Valparaíso 2014 (3.000 casas) y en los megaincendios de 2024.'},
+  {k:['2014','2017','2024','historia','catastrofe','megaincendio'],r:'Peores incendios de Chile:\n\n2014: Valparaíso, 15 cerros, 3.000 viviendas, 15 fallecidos.\n2017: Zona central, Santa Olga destruida, 500.000 ha quemadas.\n2024: Región de Valparaíso, 130+ fallecidos en una noche. Peor incendio urbano de la historia chilena.'},
+  {k:['kit','mochila','llevar','que llevo'],r:'Kit de emergencia (listo en 5 min):\n\n- Documentos en bolsa impermeable\n- 3 litros de agua por persona\n- Medicamentos para 5 días\n- Linterna con pilas\n- Radio a pilas\n- Ropa para 3 días\n- Dinero en efectivo\n- Cargador portátil'},
+  {k:['evacuar','rutas','salida','escape','punto encuentro'],r:'Para evacuar de forma segura:\n\n- Baja hacia zonas planas o la costa\n- Evita quebradas: acumulan humo\n- Busca espacio abierto si no puedes bajar\n- No uses el auto si calles están bloqueadas\n\nPuntos de encuentro: Estadio Municipal de tu ciudad, plazas y parques principales.'},
+  {k:['bomberos','cuartel','voluntario','132'],r:'El Cuerpo de Bomberos de Chile tiene más de 400 cuerpos voluntarios a nivel nacional.\n\nPara forestales también actúan:\n- CONAF: brigadas y aeronaves\n- FACH: helicópteros de apoyo\n- SENAPRED: coordinación nacional\n\nBomberos: 132 (gratuito, 24/7)\nCONAF: 800 200 100'},
+  {k:['riskometro','indice','puntaje','calcula','como funciona'],r:'El Riskómetro es la característica exclusiva de AlertaFuego.\n\nCalcula el índice de riesgo de HOY usando datos meteorológicos reales (API Open-Meteo):\n\n- Temperatura: a mayor temperatura, mayor riesgo\n- Humedad relativa: menos humedad = más peligro\n- Velocidad del viento: vientos altos propagan el fuego\n\nEntrega un puntaje de 0 a 100 actualizado para tu ubicación real.'},
+  {k:['numeros','telefono','llamar','emergencias'],r:'Números de emergencia Chile:\n\n132: Bomberos (gratuito, 24/7)\n133: Carabineros\n131: SAMU\n800 200 100: CONAF (gratuito)\n1404: SENAPRED\n\nAl llamar al 132 di: ciudad y sector, calle y número, referencia cercana, qué está ardiendo.'},
 ];
 function botReply(msg){
-  var q=msg.toLowerCase();
+  var q=msg.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   var best=null,score=0;
   KB.forEach(function(e){
     var s=0;
-    e.k.forEach(function(k){if(q.includes(k))s+=3;});
+    e.k.forEach(function(k){if(q.includes(k.normalize('NFD').replace(/[\u0300-\u036f]/g,'')))s+=3;});
     if(s>score){score=s;best=e;}
   });
-  return(best&&score>0)?best.r:'Puedo ayudarte con:\n- Zonas de riesgo en Chile\n- Que hacer ante un incendio\n- Como proteger tu hogar\n- Kit de emergencia\n- Evacuacion segura\n- Numeros de emergencia\n- Historia de grandes incendios\n- Como funciona el Riskometro\n\nEscribe tu pregunta.';
+  return(best&&score>0)?best.r:'Puedo ayudarte con:\n- Zonas de riesgo en Chile\n- Qué hacer ante un incendio\n- Cómo proteger tu hogar\n- Kit de emergencia\n- Evacuación segura\n- Números de emergencia\n- Historia de grandes incendios\n- Cómo funciona el Riskómetro';
 }
 function addBM(txt,t){var c=document.getElementById('bot-msgs');var d=document.createElement('div');d.className='bm b'+t;d.style.whiteSpace='pre-line';d.textContent=txt;c.appendChild(d);c.scrollTop=c.scrollHeight;}
 function bask(q){document.getElementById('bot-in').value=q;bsend();}
-function bsend(){var inp=document.getElementById('bot-in');var msg=inp.value.trim();if(!msg)return;inp.value='';addBM(msg,'u');setTimeout(function(){addBM(botReply(msg),'b');},350+Math.random()*200);}
+function bsend(){var inp=document.getElementById('bot-in');var msg=inp.value.trim();if(!msg)return;inp.value='';addBM(msg,'u');SND.click();setTimeout(function(){addBM(botReply(msg),'b');},350+Math.random()*200);}
 
 // RADIO
 var notifsOn=true;
 var RADIO=[
-  {t:'07:42',c:'CLAVE 10',lvl:'alert',r:'Valparaiso',txt:'Central VLP para 2a y 5a Cia: INCENDIO ESTRUCTURAL Cerro Baron, pasaje Mesia 2240. Carro 1 y Escalera 3 despachados. ETA 4 min.'},
-  {t:'07:43',c:'CLAVE 30',lvl:'normal',r:'Valparaiso',txt:'5a Cia confirmando: En ruta por Von Schroeders. Aviso a 9a Cia refuerzo.'},
-  {t:'07:51',c:'AVISO',lvl:'normal',r:'Valparaiso',txt:'Jefe de guardia en escena Cerro Baron: Fuego controlado primer piso. Riesgo propagacion a colindante. Solicitando apoyo hidrico.'},
-  {t:'08:02',c:'CLAVE 8',lvl:'normal',r:'Valparaiso',txt:'2a Cia reporta: Incendio bajo control. Sin victimas confirmadas.'},
-  {t:'08:14',c:'AVISO',lvl:'alert',r:'Nacional',txt:'SENAPRED: Alerta temprana regiones V, VI, VII y RM. Viento Puelche 45 km/h a las 15:00 hrs. Companias en alerta preventiva.'},
-  {t:'08:31',c:'CLAVE 10',lvl:'alert',r:'Biobio',txt:'Central Concepcion para 1a y 2a Cia: INCENDIO FORESTAL sector Los Pinos, camino Coronel. CONAF coordinando. Protocolo Forestal activado.'},
-  {t:'08:50',c:'AVISO',lvl:'normal',r:'Biobio',txt:'CONAF Biobio: Superficie comprometida 8 ha. Brigada terrestre activa.'},
+  {t:'07:42',c:'CLAVE 10',lvl:'alert',r:'Valparaíso',txt:'Central VLP para 2a y 5a Cía: INCENDIO ESTRUCTURAL Cerro Barón, pasaje Mesía 2240. Carro 1 y Escalera 3 despachados. ETA 4 min.'},
+  {t:'07:43',c:'CLAVE 30',lvl:'normal',r:'Valparaíso',txt:'5a Cía confirmando: En ruta por Von Schroeders. Aviso a 9a Cía refuerzo.'},
+  {t:'07:51',c:'AVISO',lvl:'normal',r:'Valparaíso',txt:'Jefe de guardia en escena Cerro Barón: Fuego controlado primer piso. Riesgo propagación colindante. Solicitando apoyo hídrico.'},
+  {t:'08:02',c:'CLAVE 8',lvl:'normal',r:'Valparaíso',txt:'2a Cía reporta: Incendio bajo control. Sin víctimas confirmadas.'},
+  {t:'08:14',c:'AVISO',lvl:'alert',r:'Nacional',txt:'SENAPRED: Alerta temprana regiones V, VI, VII y RM. Viento Puelche 45 km/h a las 15:00 hrs. Compañías en alerta preventiva.'},
+  {t:'08:31',c:'CLAVE 10',lvl:'alert',r:'Biobío',txt:'Central Concepción para 1a y 2a Cía: INCENDIO FORESTAL sector Los Pinos, camino Coronel. CONAF coordinando. Protocolo Forestal activado.'},
+  {t:'08:50',c:'AVISO',lvl:'normal',r:'Biobío',txt:'CONAF Biobío: Superficie comprometida 8 ha. Brigada terrestre activa.'},
   {t:'09:05',c:'[krrsh]',lvl:'static',r:'',txt:'..........'},
-  {t:'09:18',c:'CLAVE 10',lvl:'alert',r:'RM',txt:'Central Santiago para Cias Las Condes y La Florida: INCENDIO FORESTAL cerro El Manzano. Helicoptero CONAF en camino.'},
-  {t:'09:22',c:'CLAVE 5',lvl:'alert',r:'RM',txt:'EVACUACION PREVENTIVA sector Los Trapenses, Lo Barnechea. Rutas habilitadas Camino El Alerce y ruta G-21.'},
-  {t:'09:50',c:'CLAVE 8',lvl:'normal',r:'RM',txt:'Cia Las Condes: Controlado. 4 ha. Sin victimas.'},
-  {t:'10:03',c:'AVISO',lvl:'alert',r:'Nacional',txt:'CONAF: Puelche 52 km/h cerros Valparaiso. Humedad 18%. CONDICION ROJA. Companias V Region en alerta maxima.'},
-  {t:'10:15',c:'CLAVE 10',lvl:'alert',r:'Valparaiso',txt:'INCENDIO ESTRUCTURAL Cerro Alegre, Templeman 682. 2a y 6a Cia en camino.'},
-  {t:'10:38',c:'CLAVE 8',lvl:'normal',r:'Valparaiso',txt:'Cias 2a y 6a: Controlado Cerro Alegre. Sin lesionados. Retiro gradual.'},
-  {t:'10:55',c:'AVISO',lvl:'normal',r:'Nacional',txt:'SENAPRED: 3 incendios activos en el pais, todos con control en progreso. Nivel NARANJA vigente.'},
-  {t:'11:10',c:'CLAVE 10',lvl:'alert',r:'Maule',txt:'Central Talca para Cias 1a y 3a: INCENDIO FORESTAL sector Forel, ruta K-55. Brigada CONAF coordinando.'},
+  {t:'09:18',c:'CLAVE 10',lvl:'alert',r:'RM',txt:'Central Santiago para Cías Las Condes y La Florida: INCENDIO FORESTAL cerro El Manzano. Helicóptero CONAF en camino.'},
+  {t:'09:22',c:'CLAVE 5',lvl:'alert',r:'RM',txt:'EVACUACIÓN PREVENTIVA sector Los Trapenses, Lo Barnechea. Rutas habilitadas Camino El Alerce y ruta G-21.'},
+  {t:'09:50',c:'CLAVE 8',lvl:'normal',r:'RM',txt:'Cía Las Condes: Controlado. 4 ha. Sin víctimas.'},
+  {t:'10:03',c:'AVISO',lvl:'alert',r:'Nacional',txt:'CONAF: Puelche 52 km/h cerros Valparaíso. Humedad 18%. CONDICIÓN ROJA. Compañías V Región en alerta máxima.'},
+  {t:'10:15',c:'CLAVE 10',lvl:'alert',r:'Valparaíso',txt:'INCENDIO ESTRUCTURAL Cerro Alegre, Templeman 682. 2a y 6a Cía en camino.'},
+  {t:'10:38',c:'CLAVE 8',lvl:'normal',r:'Valparaíso',txt:'Cías 2a y 6a: Controlado Cerro Alegre. Sin lesionados. Retiro gradual.'},
+  {t:'10:55',c:'AVISO',lvl:'normal',r:'Nacional',txt:'SENAPRED: 3 incendios activos en el país, todos con control en progreso. Nivel NARANJA vigente.'},
+  {t:'11:10',c:'CLAVE 10',lvl:'alert',r:'Maule',txt:'Central Talca para Cías 1a y 3a: INCENDIO FORESTAL sector Forel, ruta K-55. Brigada CONAF coordinando.'},
   {t:'11:25',c:'[krrsh]',lvl:'static',r:'',txt:'..........'},
-  {t:'11:40',c:'AVISO',lvl:'normal',r:'Araucania',txt:'CONAF Araucania: Sin focos activos en Pucon. Brigadas en patrullaje Parque Villarrica.'},
+  {t:'11:40',c:'AVISO',lvl:'normal',r:'Araucanía',txt:'CONAF Araucanía: Sin focos activos en Pucón. Brigadas en patrullaje Parque Villarrica.'},
+  {t:'12:05',c:'CLAVE 10',lvl:'alert',r:'Valparaíso',txt:'Central VLP para 11a Cía: INCENDIO FORESTAL quebrada Rodelillo sector poniente. Protocolo Verde activado. CONAF en camino.'},
+  {t:'12:18',c:'CLAVE 5',lvl:'alert',r:'Valparaíso',txt:'EVACUACIÓN PREVENTIVA pasajes superiores Rodelillo. Municipio activa albergue Estadio Municipal.'},
 ];
 var radIdx=0,radTimer=null;
 function openRadio(){
+  SND.radio();
   document.getElementById('rad-bg').classList.add('open');
   document.getElementById('radio-nd').classList.remove('show');
   var feed=document.getElementById('rad-feed');
@@ -850,6 +1185,7 @@ function addRadio(n){
       var rs=m.r?'<span class="re-region">['+m.r+']</span> ':'';
       d.innerHTML=ts+rs+'<span class="re-code">'+m.c+'</span> <span class="re-txt">'+m.txt+'</span>';
       feed.appendChild(d);feed.scrollTop=feed.scrollHeight;
+      if(m.lvl==='alert')SND.radioPip();
     } else if(m.lvl==='alert'&&notifsOn){
       document.getElementById('radio-nd').classList.add('show');
       showToast(m.c,'['+m.r+'] '+m.txt.slice(0,65)+'...');
@@ -857,14 +1193,15 @@ function addRadio(n){
   }
 }
 function closeRadio(){document.getElementById('rad-bg').classList.remove('open');clearInterval(radTimer);radTimer=null;}
-function openBot(){document.getElementById('bot-bg').classList.add('open');}
+function openBot(){SND.click();document.getElementById('bot-bg').classList.add('open');}
 function closeBot(){document.getElementById('bot-bg').classList.remove('open');}
-function openInfo(){document.getElementById('info-bg').classList.add('open');}
+function openInfo(){SND.click();document.getElementById('info-bg').classList.add('open');}
 function closeInfo(){document.getElementById('info-bg').classList.remove('open');}
 
 var toastT=null;
 function showToast(title,body){
   if(!notifsOn)return;
+  SND.toast();
   document.getElementById('t-title').textContent=title;
   document.getElementById('t-body').textContent=body;
   document.getElementById('toast').classList.add('show');
@@ -881,11 +1218,101 @@ setInterval(function(){
     showToast(m.c,'['+m.r+'] '+m.txt.slice(0,65)+'...');
   }
 },50000);
-
 setTimeout(function(){
-  showToast('CLAVE 8','[Valparaiso] Incendio bajo control en Cerro Baron. Sin victimas.');
+  showToast('CLAVE 8','[Valparaíso] Incendio bajo control en Cerro Barón. Sin víctimas.');
   document.getElementById('radio-nd').classList.add('show');
 },12000);
+
+// ── TUTORIAL ──────────────────────────────────────────────────────
+var TUT_STEPS=[
+  {emoji:'🔥',title:'Bienvenido a AlertaFuego Chile',desc:'Te explicamos cada función en segundos. Toca "Entendido" para avanzar al siguiente paso.',target:null},
+  {emoji:'⚡',title:'Riskómetro en tiempo real',desc:'Este panel usa datos meteorológicos de HOY (temperatura, humedad y viento) para calcular el índice de riesgo de incendio en tu zona, de 0 a 100. Es única en Chile.',target:'tut-rom'},
+  {emoji:'📍',title:'Detectar tu ubicación GPS',desc:'Toca aquí para saber exactamente dónde estás. La app calcula el riesgo de TU zona y te da tus coordenadas listas para compartir con Bomberos (132).',target:'tut-gps'},
+  {emoji:'🔍',title:'Buscar cualquier zona de Chile',desc:'Escribe una ciudad, barrio o región. También puedes usar los chips de zonas frecuentes como Cerro Barón, Concepción o Pucón.',target:'tut-search'},
+  {emoji:'🚒',title:'Capas del mapa',desc:'Estos botones activan y desactivan las capas: cuarteles de Bomberos (🚒), zonas seguras y puntos de encuentro (✅), y zonas de riesgo (🔥).',target:'tut-controls'},
+  {emoji:'📡',title:'Radio CB y Asistente',desc:'"Radio CB" muestra mensajes simulados del canal de operaciones de Bomberos con sonido real. "Asistente" responde preguntas sobre incendios, evacuación y emergencias.',target:'tut-fabs'},
+];
+var tutStep=0;
+
+function startTutorial(){
+  document.getElementById('tut-overlay').classList.add('active');
+  document.getElementById('tut-backdrop').classList.add('show');
+  tutStep=0;
+  renderTutStep();
+}
+function renderTutStep(){
+  var s=TUT_STEPS[tutStep];
+  var box=document.getElementById('tut-box');
+  var spot=document.getElementById('tut-spot');
+
+  // Update content
+  box.querySelector('.tut-emoji').textContent=s.emoji;
+  box.querySelector('.tut-title').textContent=s.title;
+  box.querySelector('.tut-desc').textContent=s.desc;
+  box.querySelector('.tut-step-badge').textContent='Paso '+(tutStep+1)+' de '+TUT_STEPS.length;
+  box.querySelector('.tut-ok').textContent=tutStep===TUT_STEPS.length-1?'¡Listo! 🎉':'Entendido →';
+
+  // Dots
+  var dots=box.querySelector('.tut-dots');
+  dots.innerHTML='';
+  TUT_STEPS.forEach(function(_,i){
+    var d=document.createElement('div');
+    d.className='tut-dot'+(i===tutStep?' on':'');
+    dots.appendChild(d);
+  });
+
+  // Spotlight on target element
+  if(s.target){
+    var el=document.getElementById(s.target);
+    if(el){
+      var r=el.getBoundingClientRect();
+      var pad=12;
+      spot.style.cssText='left:'+(r.left-pad)+'px;top:'+(r.top-pad)+'px;width:'+(r.width+pad*2)+'px;height:'+(r.height+pad*2)+'px;opacity:1;display:block';
+      // Position box: prefer below, fallback above
+      var bw=300, bh=260, margin=16;
+      var bLeft=Math.max(margin, Math.min(r.left, window.innerWidth-bw-margin));
+      var bTop=r.bottom+pad+12;
+      if(bTop+bh>window.innerHeight-margin) bTop=Math.max(margin, r.top-pad-bh-12);
+      box.style.cssText='left:'+bLeft+'px;top:'+bTop+'px';
+    }
+  } else {
+    spot.style.cssText='opacity:0;display:none';
+    // Center on screen
+    box.style.cssText='left:50%;top:50%;transform:translate(-50%,-50%)';
+  }
+  SND.tut();
+}
+function nextTutStep(){
+  tutStep++;
+  if(tutStep>=TUT_STEPS.length){endTutorial();return;}
+  renderTutStep();
+}
+function endTutorial(){
+  document.getElementById('tut-overlay').classList.remove('active');
+  document.getElementById('tut-backdrop').classList.remove('show');
+  document.getElementById('tut-spot').style.cssText='opacity:0;display:none';
+  localStorage.setItem('af_tut_done','1');
+  SND.tutEnd();
+}
+
+// Live date in header
+function updateDate(){
+  var days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  var months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var now=new Date();
+  var str='📅 '+days[now.getDay()]+' '+now.getDate()+' de '+months[now.getMonth()]+' '+now.getFullYear();
+  var el=document.getElementById('live-date');
+  if(el)el.textContent=str;
+}
+updateDate();
+setInterval(updateDate,60000);
+
+// Start tutorial on first visit
+window.addEventListener('load',function(){
+  // Always show tutorial on load (remove localStorage check for demo)
+  // To only show once: wrap in: if(!localStorage.getItem('af_tut_done')){...}
+  setTimeout(startTutorial, 900);
+});
 </script>
 </body>
 </html>
