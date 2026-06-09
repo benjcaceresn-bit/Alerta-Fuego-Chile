@@ -14,7 +14,7 @@
   --bg:#EEF0F5;--card:#fff;--card2:#F4F5F8;--border:#E2E5EB;
   --text:#111827;--muted:#6B7280;--dim:#B0B7C3;
   --sh:0 1px 4px rgba(0,0,0,.08);--sh-md:0 4px 16px rgba(0,0,0,.10);--sh-lg:0 16px 48px rgba(0,0,0,.14);
-  --r:13px;--sb-w:400px;
+  --r:13px;--sb-w:460px;
 }
 body.dark{
   --bg:#0B0D14;--card:#161928;--card2:#1E2235;--border:rgba(255,255,255,.08);
@@ -56,8 +56,8 @@ body.dark .live-pill{background:rgba(220,38,38,.12);border-color:rgba(220,38,38,
 .sidebar{width:var(--sb-w);background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .3s cubic-bezier(.4,0,.2,1),opacity .3s,transform .3s;overflow:hidden;box-shadow:var(--sh-md)}
 .sidebar.collapsed{width:0;opacity:0}
 @media(max-width:768px){
-  .sidebar{position:absolute;left:0;top:0;bottom:0;z-index:250;width:90vw;max-width:380px;transform:translateX(0)}
-  .sidebar.collapsed{width:90vw;max-width:380px;transform:translateX(-100%);opacity:1}
+  .sidebar{position:fixed;left:0;top:56px;bottom:0;z-index:600;width:90vw;max-width:400px;transform:translateX(0);border-radius:0 16px 16px 0}
+  .sidebar.collapsed{width:90vw;max-width:400px;transform:translateX(-110%);opacity:1}
 }
 .stabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 6px}
 .stab{flex:1;padding:13px 6px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
@@ -67,7 +67,7 @@ body.dark .live-pill{background:rgba(220,38,38,.12);border-color:rgba(220,38,38,
 .panel{display:none}.panel.on{display:block}
 
 /* MOBILE OVERLAY */
-.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:249;backdrop-filter:blur(3px)}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:590;backdrop-filter:blur(3px)}
 .mob-overlay.show{display:block}
 
 /* RISKOMETER */
@@ -170,7 +170,7 @@ body.dark .rgi{background:rgba(255,255,255,.05)}
 .ib ul li{display:flex;gap:6px}.ib ul li::before{content:"›";color:var(--red);font-weight:800;flex-shrink:0}
 
 /* MAP CONTROLS */
-.map-controls{position:fixed;top:70px;right:14px;z-index:400;display:flex;flex-direction:column;gap:8px}
+.map-controls{position:fixed;top:108px;right:14px;z-index:400;display:flex;flex-direction:column;gap:8px}
 .mc{background:var(--card);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:var(--sh-md);transition:all .15s;color:var(--text);font-family:'Inter',sans-serif}
 .mc:hover{background:var(--card2);transform:scale(1.06)}
 .mc:active{transform:scale(.95)}
@@ -196,7 +196,7 @@ body.dark .map-legend{background:rgba(22,25,40,.96)}
 @media(max-width:768px){.mob-menu-btn{display:flex}}
 
 /* FABS */
-.fabs{position:fixed;bottom:18px;left:418px;z-index:400;display:flex;gap:8px;transition:left .3s}
+.fabs{position:fixed;bottom:18px;left:478px;z-index:400;display:flex;gap:8px;transition:left .3s}
 @media(max-width:768px){.fabs{bottom:14px;left:50%;transform:translateX(-50%);gap:7px}}
 .fab{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:var(--sh-md);color:var(--text);transition:all .2s;font-family:'Inter',sans-serif;position:relative;white-space:nowrap}
 .fab:hover{transform:translateY(-2px);box-shadow:var(--sh-lg)}
@@ -388,7 +388,7 @@ body.dark #tut-ring{border-color:#fff}
 /* Daltonismo toggle */
 body.daltonismo{--red:#0066CC;--orange:#FF8800;--green:#006600}
 /* Aviso estacional */
-.seasonal-banner{background:linear-gradient(135deg,#DC2626,#EA580C);color:white;padding:10px 16px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:10px;flex-shrink:0;position:relative}
+.seasonal-banner{background:linear-gradient(135deg,#DC2626,#EA580C);color:white;padding:10px 16px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:10px;flex-shrink:0;position:relative;padding-right:70px}
 .seasonal-banner.hidden{display:none}
 .seasonal-close{background:rgba(255,255,255,.2);border:none;border-radius:5px;color:white;width:22px;height:22px;cursor:pointer;font-size:12px;margin-left:auto;display:flex;align-items:center;justify-content:center}
 /* Historial incendios - panel extra en sidebar */
@@ -1244,7 +1244,7 @@ function toggleSidebar(){
     sbOpen=!sbOpen;
     document.getElementById('sidebar').classList.toggle('collapsed',!sbOpen);
     document.getElementById('sb-tog').textContent=sbOpen?'‹':'›';
-    document.getElementById('fabs').style.left=sbOpen?'418px':'18px';
+    document.getElementById('fabs').style.left=sbOpen?'478px':'18px';
     setTimeout(function(){map.invalidateSize();},310);
   }
 }
