@@ -192,7 +192,7 @@ body.dark .map-legend{background:rgba(22,25,40,.96)}
 @media(max-width:768px){.sb-tog{display:none}}
 
 /* MOBILE MENU BTN */
-.mob-menu-btn{display:none;position:fixed;top:66px;left:10px;z-index:402;background:var(--card);border:1px solid var(--border);border-radius:10px;width:42px;height:42px;align-items:center;justify-content:center;font-size:18px;box-shadow:var(--sh-md);cursor:pointer}
+.mob-menu-btn{display:none;position:fixed;top:66px;left:10px;z-index:500;background:var(--card);border:1px solid var(--border);border-radius:10px;width:42px;height:42px;align-items:center;justify-content:center;font-size:18px;box-shadow:var(--sh-md);cursor:pointer}
 @media(max-width:768px){.mob-menu-btn{display:flex}}
 
 /* FABS */
@@ -308,18 +308,22 @@ body.dark .map-legend{background:rgba(22,25,40,.96)}
 .t-txt span{font-size:10px;color:#6EE7B7;opacity:.75;font-family:'JetBrains Mono',monospace;display:block;margin-top:2px}
 .t-x{background:none;border:none;color:#6EE7B7;cursor:pointer;font-size:16px;margin-left:4px;flex-shrink:0}
 
-/* ── TUTORIAL OVERLAY ── */
-/* tut-overlay is transparent container, visibility controlled via JS */
-.tut-overlay{position:fixed;inset:0;z-index:3000;pointer-events:none;display:none}
-.tut-overlay.active{display:block;pointer-events:none}
-/* Dark backdrop — controlled by JS show/hide */
-.tut-backdrop{position:fixed;inset:0;background:transparent;z-index:3001;pointer-events:none;display:none}
-.tut-backdrop.show{display:block}
-/* Spotlight ring — purely visual, no click blocking */
-.tut-spotlight{position:fixed;border-radius:14px;border:2px solid #DC2626;box-shadow:0 0 0 3px rgba(220,38,38,.25),0 0 0 9999px rgba(0,0,0,.55);transition:all .4s cubic-bezier(.4,0,.2,1);z-index:3002;pointer-events:none}
-body.dark .tut-spotlight{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px rgba(255,255,255,.15),0 0 0 9999px rgba(0,0,0,.68)}
-/* Box sits on top of everything and receives all clicks */
-.tut-box{position:fixed;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;width:300px;box-shadow:0 24px 64px rgba(0,0,0,.35);z-index:3020;pointer-events:all !important;cursor:default}
+/* ── TUTORIAL ── */
+/* SVG canvas covers screen with cutout hole - pointer-events none so clicks reach box */
+#tut-svg{position:fixed;inset:0;width:100%;height:100%;z-index:3010;pointer-events:none;display:none}
+#tut-svg.show{display:block}
+/* Highlight ring drawn by JS absolutely positioned */
+#tut-ring{position:fixed;border-radius:14px;border:3px solid var(--red);z-index:3011;pointer-events:none;display:none;transition:all .35s cubic-bezier(.4,0,.2,1)}
+body.dark #tut-ring{border-color:#fff}
+/* Box is ABOVE the SVG */
+.tut-box{
+  position:fixed;background:var(--card);border:1px solid var(--border);
+  border-radius:18px;padding:22px;width:290px;
+  box-shadow:0 8px 32px rgba(0,0,0,.28);
+  z-index:3020;pointer-events:all;cursor:default;
+  transition:top .35s cubic-bezier(.4,0,.2,1),left .35s cubic-bezier(.4,0,.2,1)
+}
+@media(max-width:540px){.tut-box{width:calc(100vw - 28px) !important;left:14px !important;right:14px}}
 .tut-step-badge{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin-bottom:6px}
 .tut-box h3{font-size:15px;font-weight:800;margin-bottom:8px;color:var(--text)}
 .tut-box p{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:18px}
@@ -328,10 +332,10 @@ body.dark .tut-spotlight{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px 
 .tut-dots{display:flex;gap:5px}
 .tut-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:background .2s}
 .tut-dot.on{background:var(--red)}
-.tut-ok{background:var(--red);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer !important;font-family:'Inter',sans-serif;transition:all .15s;pointer-events:all !important;position:relative;z-index:3025}
+.tut-ok{background:var(--red);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
 .tut-ok:hover{background:#B91C1C;transform:scale(1.04)}
 .tut-ok:active{transform:scale(.97)}
-.tut-skip{background:none;border:none;font-size:12px;color:var(--muted);cursor:pointer !important;font-family:'Inter',sans-serif;padding:4px;pointer-events:all !important;position:relative;z-index:3025}
+.tut-skip{background:none;border:none;font-size:12px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;padding:4px}
 .tut-skip:hover{color:var(--text)}
 
 /* Leaflet overrides */
@@ -340,6 +344,71 @@ body.dark .tut-spotlight{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px 
 .leaflet-control-zoom{border-radius:10px!important;overflow:hidden;border:1px solid var(--border)!important;box-shadow:var(--sh-md)!important}
 .leaflet-control-zoom a{background:var(--card)!important;color:var(--text)!important;border-bottom-color:var(--border)!important}
 .leaflet-control-zoom a:hover{background:var(--card2)!important}
+
+/* ── FEATURES EXTRAS ── */
+/* Modo pánico */
+.panic-btn{position:fixed;bottom:80px;right:14px;z-index:401;background:#DC2626;color:white;border:none;border-radius:50%;width:54px;height:54px;font-size:22px;cursor:pointer;box-shadow:0 4px 18px rgba(220,38,38,.5);transition:all .2s;display:flex;align-items:center;justify-content:center}
+.panic-btn:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(220,38,38,.6)}
+.panic-btn:active{transform:scale(.95)}
+@media(max-width:768px){.panic-btn{bottom:75px;right:12px;width:50px;height:50px;font-size:20px}}
+/* Checklist modal */
+.checklist-m{background:var(--card);border:1px solid var(--border);border-radius:16px;width:340px;max-height:540px;display:flex;flex-direction:column;box-shadow:var(--sh-lg);animation:slup .25s ease;margin-bottom:60px;overflow:hidden}
+@media(max-width:768px){.checklist-m{width:100%;border-radius:20px 20px 0 0;margin-bottom:0;max-height:80vh}}
+.cl-head{background:linear-gradient(135deg,#16A34A,#059669);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.cl-head h3{font-size:14px;font-weight:700;color:#fff}
+.cl-x{background:rgba(255,255,255,.2);border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
+.cl-body{flex:1;overflow-y:scroll;padding:14px}
+.cl-section{margin-bottom:16px}
+.cl-section h4{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.cl-item{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--card2);border:1px solid var(--border);border-radius:9px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+.cl-item.done{opacity:.55;text-decoration:line-through}
+.cl-item:hover{border-color:var(--green)}
+.cl-check{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:12px}
+.cl-item.done .cl-check{background:#16A34A;border-color:#16A34A;color:white}
+.cl-label{font-size:13px;flex:1}
+.cl-progress{background:var(--card2);border-top:1px solid var(--border);padding:12px 14px;flex-shrink:0}
+.cl-prog-bar{background:var(--border);border-radius:20px;height:6px;overflow:hidden;margin-bottom:6px}
+.cl-prog-fill{background:#16A34A;height:100%;border-radius:20px;transition:width .4s ease}
+.cl-prog-txt{font-size:11px;color:var(--muted);text-align:center}
+/* Compartir riskómetro */
+.share-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;color:white;cursor:pointer;font-family:'Inter',sans-serif;margin-top:8px;transition:background .15s;width:100%;justify-content:center}
+.share-btn:hover{background:rgba(255,255,255,.2)}
+/* Reporte ciudadano */
+.report-m{background:var(--card);border:1px solid var(--border);border-radius:16px;width:340px;box-shadow:var(--sh-lg);animation:slup .25s ease;margin-bottom:60px;overflow:hidden}
+@media(max-width:768px){.report-m{width:100%;border-radius:20px 20px 0 0;margin-bottom:0}}
+.rep-head{background:linear-gradient(135deg,#EA580C,#DC2626);padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.rep-head h3{font-size:14px;font-weight:700;color:#fff}
+.rep-x{background:rgba(255,255,255,.2);border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
+.rep-body{padding:16px}
+.rep-label{font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;display:block}
+.rep-select{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;margin-bottom:12px;cursor:pointer}
+.rep-textarea{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none;resize:none;height:80px;margin-bottom:12px}
+.rep-submit{background:var(--red);color:#fff;border:none;border-radius:8px;padding:11px 0;font-size:13px;font-weight:700;cursor:pointer;width:100%;font-family:'Inter',sans-serif;transition:background .15s}
+.rep-submit:hover{background:#B91C1C}
+/* Daltonismo toggle */
+body.daltonismo{--red:#0066CC;--orange:#FF8800;--green:#006600}
+/* Aviso estacional */
+.seasonal-banner{background:linear-gradient(135deg,#DC2626,#EA580C);color:white;padding:10px 16px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:10px;flex-shrink:0;position:relative}
+.seasonal-banner.hidden{display:none}
+.seasonal-close{background:rgba(255,255,255,.2);border:none;border-radius:5px;color:white;width:22px;height:22px;cursor:pointer;font-size:12px;margin-left:auto;display:flex;align-items:center;justify-content:center}
+/* Historial incendios - panel extra en sidebar */
+.hist-item{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:11px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.hist-item:hover{border-color:var(--red);transform:translateX(3px)}
+.hist-year{font-size:18px;font-weight:800;color:var(--red);line-height:1}
+.hist-title{font-size:12px;font-weight:600;margin:2px 0}
+.hist-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.hist-stat{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.hist-tag{font-size:10px;background:rgba(220,38,38,.1);color:var(--red);padding:2px 7px;border-radius:10px;font-weight:600}
+/* Glosario */
+.glos-item{border-bottom:1px solid var(--border);padding:10px 0}
+.glos-item:last-child{border-bottom:none}
+.glos-term{font-size:13px;font-weight:700;color:var(--red);margin-bottom:3px}
+.glos-def{font-size:11px;color:var(--muted);line-height:1.5}
+/* Contador incendios activos */
+.fire-counter{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);border-radius:10px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.fire-counter-num{font-size:2rem;font-weight:900;color:var(--red);line-height:1;font-variant-numeric:tabular-nums}
+.fire-counter-lbl{font-size:11px;color:var(--muted);line-height:1.4}
+.fire-counter-pulse{width:10px;height:10px;border-radius:50%;background:var(--red);animation:bl 1s infinite;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -361,16 +430,23 @@ body.dark .tut-spotlight{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px 
   </div>
 </div>
 
+<!-- SEASONAL WARNING BANNER -->
+<div class="seasonal-banner" id="seasonal-banner">
+  🔥 <span id="seasonal-msg">Temporada de incendios activa · Dic–Mar · Mantén tu kit de emergencia listo</span>
+  <button class="seasonal-close" onclick="this.parentElement.classList.add('hidden')">✕</button>
+</div>
 <div class="app">
   <!-- Mobile overlay -->
   <div class="mob-overlay" id="mob-overlay" onclick="closeSidebarMobile()"></div>
 
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
-    <div class="stabs">
+    <div class="stabs" style="overflow-x:scroll;scrollbar-width:none">
       <div class="stab on" data-p="buscar" onclick="SND.tab();showPanel('buscar')">🔍 Buscar</div>
       <div class="stab" data-p="info" onclick="SND.tab();showPanel('info')">📊 Info</div>
+      <div class="stab" data-p="hist" onclick="SND.tab();showPanel('hist')">🔥 Historial</div>
       <div class="stab" data-p="guia" onclick="SND.tab();showPanel('guia')">📋 Guía</div>
+      <div class="stab" data-p="glos" onclick="SND.tab();showPanel('glos')">📖 Glosario</div>
     </div>
     <div class="sb-body">
 
@@ -395,6 +471,7 @@ body.dark .tut-spotlight{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px 
             </div>
           </div>
           <div class="rom-upd" id="rom-upd"></div>
+          <button class="share-btn" onclick="shareRisk()">📤 Compartir índice de riesgo</button>
         </div>
 
         <div class="gps-card" id="tut-gps" onclick="SND.gps();getGPS()">
@@ -463,6 +540,11 @@ body.dark .tut-spotlight{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px 
 
       <!-- INFO PANEL -->
       <div class="panel" id="panel-info">
+        <div class="fire-counter">
+          <div class="fire-counter-pulse"></div>
+          <div class="fire-counter-num" id="fire-count">847</div>
+          <div class="fire-counter-lbl">Incendios activos<br>estimados en Chile hoy</div>
+        </div>
         <div class="slbl" style="margin-bottom:11px">Temporada 2025–2026 · Chile</div>
         <div class="sg">
           <div class="sc"><div class="sn cr">8.400</div><div class="sl">Incendios registrados</div></div>
@@ -523,6 +605,65 @@ body.dark .tut-spotlight{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px 
         </ul></div>
       </div>
 
+
+      <!-- HISTORIAL PANEL -->
+      <div class="panel" id="panel-hist">
+        <div class="slbl" style="margin-bottom:11px">Grandes incendios de Chile</div>
+        <div class="hist-item" onclick="SND.click();focusHistory(-33.047,-71.612,13)">
+          <div class="hist-year">2024</div>
+          <div class="hist-title">Megaincendios Región de Valparaíso</div>
+          <div class="hist-desc">El peor incendio urbano de la historia de Chile. Una sola noche. Villa Independencia arrasada.</div>
+          <div class="hist-stat"><span class="hist-tag">130+ fallecidos</span><span class="hist-tag">16.000+ damnificados</span><span class="hist-tag">Viña del Mar</span></div>
+        </div>
+        <div class="hist-item" onclick="SND.click();focusHistory(-35.8,-71.6,11)">
+          <div class="hist-year">2017</div>
+          <div class="hist-title">Megaincendios zona central · Santa Olga</div>
+          <div class="hist-desc">La peor temporada hasta ese año. Santa Olga quedó completamente destruida. Múltiples regiones afectadas simultáneamente.</div>
+          <div class="hist-stat"><span class="hist-tag">11 fallecidos</span><span class="hist-tag">500.000 ha</span><span class="hist-tag">Maule, O'Higgins, Biobío</span></div>
+        </div>
+        <div class="hist-item" onclick="SND.click();focusHistory(-33.047,-71.612,14)">
+          <div class="hist-year">2014</div>
+          <div class="hist-title">Gran incendio de Valparaíso</div>
+          <div class="hist-desc">12 de abril. Viento Puelche de 80 km/h. 15 cerros arrasados en pocas horas. El antes y el después de los incendios urbanos en Chile.</div>
+          <div class="hist-stat"><span class="hist-tag">15 fallecidos</span><span class="hist-tag">3.000+ viviendas</span><span class="hist-tag">12.500 damnificados</span></div>
+        </div>
+        <div class="hist-item" onclick="SND.click();focusHistory(-36.82,-73.04,11)">
+          <div class="hist-year">2012</div>
+          <div class="hist-title">Incendios Biobío · Arauco</div>
+          <div class="hist-desc">Grandes incendios en plantaciones forestales del sur. Marcó el inicio del debate sobre el modelo forestal chileno.</div>
+          <div class="hist-stat"><span class="hist-tag">45.000 ha</span><span class="hist-tag">Biobío</span></div>
+        </div>
+        <div class="hist-item" onclick="SND.click();focusHistory(-38.73,-72.59,11)">
+          <div class="hist-year">2002</div>
+          <div class="hist-title">Incendio Parque Nacional Tolhuaca</div>
+          <div class="hist-desc">Uno de los mayores incendios en bosque nativo de La Araucanía. Destruyó miles de hectáreas de araucarias centenarias.</div>
+          <div class="hist-stat"><span class="hist-tag">15.000 ha</span><span class="hist-tag">La Araucanía</span></div>
+        </div>
+        <div class="ib" style="margin-top:12px"><h4>📊 En perspectiva</h4><ul>
+          <li>Chile tiene un 34% más de incendios que hace 20 años</li>
+          <li>El cambio climático alarga la temporada de riesgo</li>
+          <li>Las plantaciones de eucalipto y pino son el principal combustible</li>
+          <li>Valparaíso es la ciudad chilena con más riesgo de incendio urbano</li>
+        </ul></div>
+      </div>
+      <!-- GLOSARIO PANEL -->
+      <div class="panel" id="panel-glos">
+        <div class="slbl" style="margin-bottom:11px">Términos clave</div>
+        <div class="glos-item"><div class="glos-term">CLAVE 10</div><div class="glos-def">Código de radio de bomberos que indica un incendio activo. Al escuchar "Clave 10" se despachan unidades de inmediato.</div></div>
+        <div class="glos-item"><div class="glos-term">CLAVE 30</div><div class="glos-def">Unidades en camino al siniestro. Confirmación de que la compañía ha salido del cuartel.</div></div>
+        <div class="glos-item"><div class="glos-term">CLAVE 8</div><div class="glos-def">Incendio controlado o bajo control. Indica que el fuego está contenido aunque puede no estar extinguido.</div></div>
+        <div class="glos-item"><div class="glos-term">CLAVE 5</div><div class="glos-def">Evacuación. Orden de desalojo preventivo o de emergencia de una zona.</div></div>
+        <div class="glos-item"><div class="glos-term">Viento Puelche</div><div class="glos-def">Viento que sopla del este hacia el oeste, bajando seco y cálido desde los Andes por efecto Foehn. Principal factor de propagación de incendios en Chile central.</div></div>
+        <div class="glos-item"><div class="glos-term">Interfaz Urbano-Forestal</div><div class="glos-def">Zona donde las construcciones habitadas se mezclan directamente con vegetación natural o plantaciones. Es el escenario de mayor riesgo en Chile.</div></div>
+        <div class="glos-item"><div class="glos-term">Riskómetro</div><div class="glos-def">Índice exclusivo de AlertaFuego. Calcula el riesgo de incendio del día (0–100) combinando temperatura, humedad relativa y velocidad del viento en tiempo real.</div></div>
+        <div class="glos-item"><div class="glos-term">CONAF</div><div class="glos-def">Corporación Nacional Forestal. Organismo estatal responsable del combate de incendios forestales en Chile. Tel: 800 200 100.</div></div>
+        <div class="glos-item"><div class="glos-term">SENAPRED</div><div class="glos-def">Servicio Nacional de Prevención y Respuesta ante Desastres (ex-ONEMI). Coordina emergencias a nivel nacional. Tel: 1404.</div></div>
+        <div class="glos-item"><div class="glos-term">Pirófito</div><div class="glos-def">Especie vegetal adaptada al fuego o que favorece su propagación. El eucalipto y el pino son ejemplos típicos en Chile.</div></div>
+        <div class="glos-item"><div class="glos-term">Pavesa / Tizón</div><div class="glos-def">Fragmento encendido que el viento transporta y puede iniciar nuevos focos de incendio a cientos de metros del fuego principal.</div></div>
+        <div class="glos-item"><div class="glos-term">Cortafuego</div><div class="glos-def">Franja de terreno limpia de vegetación que actúa como barrera contra la propagación del fuego. Esencial en zonas de interfaz.</div></div>
+        <div class="glos-item"><div class="glos-term">Protocolo Verde</div><div class="glos-def">Activación de recursos forestales de CONAF ante un incendio forestal. Implica brigadas, maquinaria y posible uso de aeronaves.</div></div>
+        <div class="glos-item"><div class="glos-term">Megaincendio</div><div class="glos-def">Incendio que supera las 10.000 hectáreas o que por su magnitud requiere recursos extraordinarios para ser controlado.</div></div>
+      </div>
     </div><!-- sb-body -->
   </div><!-- sidebar -->
 
@@ -558,11 +699,45 @@ body.dark .tut-spotlight{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px 
         <div class="nd" id="radio-nd"></div>
       </button>
       <button class="fab" onclick="SND.click();openBot()" id="tut-bot">🤖 Asistente</button>
+      <button class="fab" onclick="SND.click();openCL()" title="Kit emergencia">🎒</button>
+      <button class="fab" onclick="SND.click();openRep()" title="Reportar humo/fuego">🚨</button>
       <button class="fab" onclick="SND.click();openInfo()">ℹ️</button>
     </div>
   </div>
 </div>
 
+
+<!-- PANIC BUTTON -->
+<button class="panic-btn" id="panic-btn" onclick="panicMode()" title="🆘 Modo pánico - compartir ubicación">🆘</button>
+<!-- CHECKLIST MODAL -->
+<div class="mbg" id="cl-bg" onclick="if(event.target===this)closeCL()">
+  <div class="checklist-m">
+    <div class="cl-head"><h3>🎒 Kit de emergencia</h3><button class="cl-x" onclick="closeCL()">✕</button></div>
+    <div class="cl-body" id="cl-body"></div>
+    <div class="cl-progress"><div class="cl-prog-bar"><div class="cl-prog-fill" id="cl-fill" style="width:0%"></div></div><div class="cl-prog-txt" id="cl-txt">0 de 0 ítems listos</div></div>
+  </div>
+</div>
+<!-- REPORTE CIUDADANO -->
+<div class="mbg" id="rep-bg" onclick="if(event.target===this)closeRep()">
+  <div class="report-m">
+    <div class="rep-head"><h3>🚨 Reportar humo o fuego</h3><button class="rep-x" onclick="closeRep()">✕</button></div>
+    <div class="rep-body">
+      <label class="rep-label">¿Qué estás reportando?</label>
+      <select class="rep-select" id="rep-type">
+        <option>Humo visible a distancia</option>
+        <option>Llamas activas</option>
+        <option>Olor a quemado</option>
+        <option>Incendio de vivienda</option>
+        <option>Incendio forestal</option>
+        <option>Columna de humo grande</option>
+      </select>
+      <label class="rep-label">Descripción (opcional)</label>
+      <textarea class="rep-textarea" id="rep-desc" placeholder="Cerro, calle, referencia cercana..."></textarea>
+      <button class="rep-submit" onclick="submitReport()">📤 Enviar reporte</button>
+      <p style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px">En emergencia real llama al 132</p>
+    </div>
+  </div>
+</div>
 <!-- TOAST -->
 <div class="toast" id="toast">
   <div class="t-ico">📡</div>
@@ -644,16 +819,32 @@ body.dark .tut-spotlight{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px 
         <div class="info-inst-ico">🎓</div>
         <div><div class="info-inst-name">DuocUC Valparaíso</div><div class="info-inst-sub">Ingeniería en Informática</div></div>
       </div>
-      <div class="info-ver">AlertaFuego © 2026 · Prototipo académico</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:10px 12px">
+        <span style="font-size:20px">👁</span>
+        <div style="flex:1"><div style="font-size:12px;font-weight:600">Modo daltónico</div><div style="font-size:10px;color:var(--muted)">Paleta adaptada para daltonismo</div></div>
+        <label class="tsw" style="margin-left:auto">
+          <input type="checkbox" id="daltonismo-chk" onchange="toggleDaltonismo(this.checked)">
+          <div class="ttrack" style="background:#1e3a6e"></div>
+          <div class="tthumb"></div>
+        </label>
+      </div>
+      <div class="info-ver">AlertaFuego © 2026 · Prototipo académico v2.5</div>
     </div>
   </div>
 </div>
 
-<!-- TUTORIAL -->
-<div class="tut-backdrop" id="tut-backdrop" style="display:none"></div>
-<div class="tut-spotlight" id="tut-spot" style="opacity:0"></div>
-<div class="tut-overlay" id="tut-overlay">
-  <div class="tut-box" id="tut-box">
+<!-- TUTORIAL: SVG overlay + ring + box, all separate elements -->
+<svg id="tut-svg" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="tut-mask">
+      <rect width="100%" height="100%" fill="white"/>
+      <rect id="tut-hole" x="0" y="0" width="0" height="0" rx="14" fill="black"/>
+    </mask>
+  </defs>
+  <rect width="100%" height="100%" fill="rgba(0,0,0,0.65)" mask="url(#tut-mask)"/>
+</svg>
+<div id="tut-ring"></div>
+<div class="tut-box" id="tut-box" style="display:none">
     <span class="tut-emoji">🔥</span>
     <div class="tut-step-badge">Paso 1 de 6</div>
     <h3 class="tut-title">Bienvenido a AlertaFuego</h3>
@@ -664,7 +855,6 @@ body.dark .tut-spotlight{border-color:rgba(255,255,255,.7);box-shadow:0 0 0 3px 
       <button class="tut-ok" onclick="nextTutStep()">Entendido →</button>
     </div>
   </div>
-</div>
 
 <script>
 // ── AUDIO ENGINE ─────────────────────────────────────────────────
@@ -788,12 +978,33 @@ function toggleDark(){
   L.tileLayer(dark
     ?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
     :'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    {attribution:'© OpenStreetMap © CARTO',maxZoom:19}).addTo(map);
+    {attribution:'© OpenStreetMap © CARTO',maxZoom:17,updateWhenIdle:isMobileDevice,keepBuffer:isMobileDevice?1:2}).addTo(map);
 }
 
 // ── MAP ────────────────────────────────────────────────────────────
-var map=L.map('map',{zoomControl:true}).setView([-35.5,-71.5],6);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:19}).addTo(map);
+var isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
+var map=L.map('map',{
+  zoomControl:true,
+  // Performance: prefer canvas renderer on mobile
+  renderer: isMobileDevice ? L.canvas() : L.svg(),
+  // Limit zoom to avoid loading too many tiles
+  minZoom:5,
+  maxZoom:17,
+  // Snap zoom for performance
+  wheelPxPerZoomLevel:120,
+}).setView([-35.5,-71.5], isMobileDevice ? 5 : 6);
+
+// Restrict map to Chile + surrounding area
+var chileBounds = L.latLngBounds(L.latLng(-56,-82), L.latLng(-17,-60));
+map.setMaxBounds(chileBounds);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+  attribution:'© OpenStreetMap © CARTO',
+  maxZoom:17,
+  // Load tiles only when map stops moving on mobile = fewer requests
+  updateWhenIdle: isMobileDevice,
+  updateWhenZooming: !isMobileDevice,
+  keepBuffer: isMobileDevice ? 1 : 2,
+}).addTo(map);
 map.on('click',function(){SND.click();});
 
 function mkIco(e,bg,br){br=br||'7px';return L.divIcon({html:'<div style="background:'+bg+';border:2px solid white;border-radius:'+br+';width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,.3)">'+e+'</div>',iconSize:[30,30],iconAnchor:[15,15],className:''});}
@@ -891,7 +1102,10 @@ var bomberos=[
   {n:'Cía. Punta Arenas 2ª',lat:-53.1780,lng:-70.9350,c:'Punta Arenas'},
 ];
 bomberos.forEach(function(b){
-  L.marker([b.lat,b.lng],{icon:mkIco('🚒','#DC2626')})
+  var marker = isMobileDevice
+    ? L.circleMarker([b.lat,b.lng],{radius:5,fillColor:'#DC2626',color:'white',weight:1.5,fillOpacity:0.9})
+    : L.marker([b.lat,b.lng],{icon:mkIco('🚒','#DC2626')});
+  marker
    .bindPopup('<b>🚒 '+b.n+'</b><br><small style="color:#6B7280">'+b.c+' · Bomberos de Chile</small>')
    .addTo(lBomb);
 });
@@ -933,7 +1147,10 @@ var safePts=[
   {n:'Estadio Puerto Montt',lat:-41.4750,lng:-72.9380,i:'Puerto Montt'},
 ];
 safePts.forEach(function(s){
-  L.marker([s.lat,s.lng],{icon:mkIco('✅','#16A34A')})
+  var sm = isMobileDevice
+    ? L.circleMarker([s.lat,s.lng],{radius:5,fillColor:'#16A34A',color:'white',weight:1.5,fillOpacity:0.9})
+    : L.marker([s.lat,s.lng],{icon:mkIco('✅','#16A34A')});
+  sm
    .bindPopup('<b>✅ Punto de encuentro seguro</b><br><b>'+s.n+'</b><br><small>'+s.i+'</small>')
    .addTo(lSafe);
 });
@@ -1014,8 +1231,13 @@ function doSearch(){
 function estRisk(lat,lng){if(lat<-35&&lat>-42)return'high';if(lat<-33&&lat>-35)return'high';return'med';}
 
 // SIDEBAR
-var sbOpen=true;
+var isMobileDevice2=window.innerWidth<=768;
+var sbOpen=!isMobileDevice2; // collapsed by default on mobile
 var isMobile=function(){return window.innerWidth<=768;};
+// Apply initial state on mobile
+if(isMobileDevice2){
+  document.getElementById('sidebar').classList.add('collapsed');
+}
 function toggleSidebar(){
   if(isMobile()){sbOpen?closeSidebarMobile():openSidebarMobile();}
   else{
@@ -1223,29 +1445,34 @@ setTimeout(function(){
   document.getElementById('radio-nd').classList.add('show');
 },12000);
 
-// ── TUTORIAL ──────────────────────────────────────────────────────
+// ── TUTORIAL (SVG cutout approach - works on all browsers) ────────
 var TUT_STEPS=[
-  {emoji:'🔥',title:'Bienvenido a AlertaFuego Chile',desc:'Te explicamos cada función en segundos. Toca "Entendido" para avanzar al siguiente paso.',target:null},
-  {emoji:'⚡',title:'Riskómetro en tiempo real',desc:'Este panel usa datos meteorológicos de HOY (temperatura, humedad y viento) para calcular el índice de riesgo de incendio en tu zona, de 0 a 100. Es única en Chile.',target:'tut-rom'},
-  {emoji:'📍',title:'Detectar tu ubicación GPS',desc:'Toca aquí para saber exactamente dónde estás. La app calcula el riesgo de TU zona y te da tus coordenadas listas para compartir con Bomberos (132).',target:'tut-gps'},
-  {emoji:'🔍',title:'Buscar cualquier zona de Chile',desc:'Escribe una ciudad, barrio o región. También puedes usar los chips de zonas frecuentes como Cerro Barón, Concepción o Pucón.',target:'tut-search'},
-  {emoji:'🚒',title:'Capas del mapa',desc:'Estos botones activan y desactivan las capas: cuarteles de Bomberos (🚒), zonas seguras y puntos de encuentro (✅), y zonas de riesgo (🔥).',target:'tut-controls'},
-  {emoji:'📡',title:'Radio CB y Asistente',desc:'"Radio CB" muestra mensajes simulados del canal de operaciones de Bomberos con sonido real. "Asistente" responde preguntas sobre incendios, evacuación y emergencias.',target:'tut-fabs'},
+  {emoji:'🔥',title:'Bienvenido a AlertaFuego Chile',desc:'Te mostramos cada función paso a paso. Toca "Entendido" para avanzar.',target:null},
+  {emoji:'⚡',title:'Riskómetro en tiempo real',desc:'Usa datos meteorológicos de HOY (temperatura, humedad, viento) para calcular el índice de riesgo 0–100. Única en Chile.',target:'tut-rom'},
+  {emoji:'📍',title:'Tu ubicación GPS',desc:'Toca para detectar dónde estás. El riskómetro se actualiza con tus coordenadas y te da la info lista para Bomberos (132).',target:'tut-gps'},
+  {emoji:'🔍',title:'Buscar cualquier zona',desc:'Escribe ciudad, barrio o región de Chile. También usa los chips rápidos de Cerro Barón, Concepción, Pucón y más.',target:'tut-search'},
+  {emoji:'🚒',title:'Capas del mapa',desc:'Activa o desactiva cuarteles de Bomberos 🚒, zonas seguras ✅ y zonas de riesgo 🔥 con estos botones.',target:'tut-controls'},
+  {emoji:'📡',title:'Radio CB y Asistente IA',desc:'"Radio CB" simula el canal de operaciones de Bomberos en tiempo real. "Asistente" responde cualquier pregunta sobre incendios y emergencias.',target:'tut-fabs'},
 ];
 var tutStep=0;
+var tutActive=false;
 
 function startTutorial(){
-  document.getElementById('tut-overlay').classList.add('active');
-  document.getElementById('tut-backdrop').classList.add('show');
+  tutActive=true;
   tutStep=0;
+  document.getElementById('tut-svg').classList.add('show');
+  document.getElementById('tut-box').style.display='block';
   renderTutStep();
 }
+
 function renderTutStep(){
   var s=TUT_STEPS[tutStep];
   var box=document.getElementById('tut-box');
-  var spot=document.getElementById('tut-spot');
+  var ring=document.getElementById('tut-ring');
+  var hole=document.getElementById('tut-hole');
+  var isMob=window.innerWidth<=600;
 
-  // Update content
+  // Update text content
   box.querySelector('.tut-emoji').textContent=s.emoji;
   box.querySelector('.tut-title').textContent=s.title;
   box.querySelector('.tut-desc').textContent=s.desc;
@@ -1261,37 +1488,53 @@ function renderTutStep(){
     dots.appendChild(d);
   });
 
-  // Spotlight on target element
-  if(s.target){
+  if(s.target && !isMob){
     var el=document.getElementById(s.target);
     if(el){
       var r=el.getBoundingClientRect();
-      var pad=12;
-      spot.style.cssText='left:'+(r.left-pad)+'px;top:'+(r.top-pad)+'px;width:'+(r.width+pad*2)+'px;height:'+(r.height+pad*2)+'px;opacity:1;display:block';
-      // Position box: prefer below, fallback above
-      var bw=300, bh=260, margin=16;
-      var bLeft=Math.max(margin, Math.min(r.left, window.innerWidth-bw-margin));
-      var bTop=r.bottom+pad+12;
-      if(bTop+bh>window.innerHeight-margin) bTop=Math.max(margin, r.top-pad-bh-12);
-      box.style.cssText='left:'+bLeft+'px;top:'+bTop+'px';
+      var pad=10;
+      var x=r.left-pad, y=r.top-pad, w=r.width+pad*2, h=r.height+pad*2;
+
+      // SVG hole cutout - this is what makes the backdrop transparent there
+      hole.setAttribute('x',x);
+      hole.setAttribute('y',y);
+      hole.setAttribute('width',w);
+      hole.setAttribute('height',h);
+
+      // Ring border around the highlighted element
+      ring.style.cssText='display:block;left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px';
+
+      // Position box: below the element, or above if not enough space
+      var margin=14;
+      var bw=isMob?window.innerWidth-28:290;
+      var bLeft=isMob?14:Math.max(margin,Math.min(x,window.innerWidth-bw-margin));
+      var bTop=y+h+margin;
+      // If box would go off screen bottom, put it above
+      if(bTop+260>window.innerHeight) bTop=Math.max(margin,y-260-margin);
+      box.style.cssText='display:block;left:'+bLeft+'px;top:'+bTop+'px;width:'+(isMob?'calc(100vw - 28px)':bw+'px');
+      return;
     }
-  } else {
-    spot.style.cssText='opacity:0;display:none';
-    // Center on screen
-    box.style.cssText='left:50%;top:50%;transform:translate(-50%,-50%)';
   }
-  SND.tut();
+  // No target or mobile: center, no cutout
+  hole.setAttribute('width',0);hole.setAttribute('height',0);
+  ring.style.cssText='display:none';
+  box.style.cssText='display:block;left:50%;top:46%;transform:translate(-50%,-50%);width:290px';
+  if(isMob) box.style.cssText='display:block;left:14px;top:50%;transform:translateY(-50%);width:calc(100vw - 28px)';
 }
+
 function nextTutStep(){
+  SND.tut();
   tutStep++;
   if(tutStep>=TUT_STEPS.length){endTutorial();return;}
   renderTutStep();
 }
 function endTutorial(){
-  document.getElementById('tut-overlay').classList.remove('active');
-  document.getElementById('tut-backdrop').classList.remove('show');
-  document.getElementById('tut-spot').style.cssText='opacity:0;display:none';
-  localStorage.setItem('af_tut_done','1');
+  tutActive=false;
+  document.getElementById('tut-svg').classList.remove('show');
+  document.getElementById('tut-ring').style.display='none';
+  document.getElementById('tut-box').style.display='none';
+  document.getElementById('tut-hole').setAttribute('width',0);
+  document.getElementById('tut-hole').setAttribute('height',0);
   SND.tutEnd();
 }
 
@@ -1313,6 +1556,129 @@ window.addEventListener('load',function(){
   // To only show once: wrap in: if(!localStorage.getItem('af_tut_done')){...}
   setTimeout(startTutorial, 900);
 });
+
+// ── HISTORIAL ────────────────────────────────────────────────────
+function focusHistory(lat,lng,zoom){
+  map.setView([lat,lng],zoom,{animate:true});
+  showPanel('buscar');
+  SND.success();
+}
+
+// ── SEASONAL BANNER ───────────────────────────────────────────────
+function checkSeason(){
+  var m=new Date().getMonth(); // 0=Jan
+  var msg='';
+  if(m>=11||m<=2) msg='🔥 TEMPORADA ACTIVA (Dic–Mar) · Riesgo máximo · Ten tu kit listo y conoce tus rutas de evacuación';
+  else if(m>=9) msg='⚠️ Pre-temporada (Oct–Nov) · Prepara tu kit de emergencia antes que llegue el calor';
+  else msg='✅ Fuera de temporada de alto riesgo · Buen momento para revisar tu plan de evacuación';
+  document.getElementById('seasonal-msg').textContent=msg;
+}
+checkSeason();
+
+// ── FIRE COUNTER (simulated with slight random variation) ─────────
+function updateFireCount(){
+  var base=847;
+  var variation=Math.floor(Math.random()*12)-3;
+  document.getElementById('fire-count').textContent=Math.max(0,base+variation);
+}
+updateFireCount();
+setInterval(updateFireCount,30000);
+
+// ── SHARE RISKOMETER ─────────────────────────────────────────────
+function shareRisk(){
+  SND.click();
+  var score=document.getElementById('rom-score').textContent;
+  var badge=document.getElementById('rom-badge').textContent;
+  var temp=document.getElementById('rf-t').textContent;
+  var hum=document.getElementById('rf-h').textContent;
+  var wind=document.getElementById('rf-w').textContent;
+  var txt='🔥 AlertaFuego Chile\n\nÍndice de riesgo de incendio: '+score+'/100\nNivel: '+badge+'\n\n🌡️ Temperatura: '+temp+'\n💧 Humedad: '+hum+'\n🌬️ Viento: '+wind+'\n\nConsulta tu zona en AlertaFuego Chile';
+  if(navigator.share){
+    navigator.share({title:'AlertaFuego Chile — Índice de Riesgo',text:txt}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(txt).then(function(){
+      SND.copy();
+      alert('Índice de riesgo copiado al portapapeles');
+    }).catch(function(){prompt('Copia:',txt);});
+  }
+}
+
+// ── PANIC MODE ───────────────────────────────────────────────────
+function panicMode(){
+  SND.alert();
+  if(!navigator.geolocation){alert('Sin geolocalización. Llama al 132.');return;}
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var la=pos.coords.latitude.toFixed(5),ln=pos.coords.longitude.toFixed(5);
+    var txt='🆘 EMERGENCIA DE INCENDIO\nMi ubicación: Lat '+la+' Lng '+ln+'\nhttps://maps.google.com/?q='+la+','+ln+'\n\n🚒 Bomberos: 132 | 🚑 SAMU: 131 | 👮 Carabineros: 133';
+    if(navigator.share){
+      navigator.share({title:'🆘 Emergencia AlertaFuego',text:txt}).catch(function(){});
+    } else {
+      navigator.clipboard.writeText(txt).then(function(){
+        SND.copy();
+        alert('📋 Ubicación copiada. Pégala en WhatsApp o mensaje de texto y envíala a alguien de confianza.\n\n¡Llama al 132 ahora!');
+      }).catch(function(){prompt('Copia y envía:',txt);});
+    }
+  },function(){alert('No se pudo obtener ubicación.\n\n¡Llama al 132 ahora!');});
+}
+
+// ── CHECKLIST ────────────────────────────────────────────────────
+var CL_ITEMS=[
+  {cat:'Documentos',items:['Cédula de identidad (bolsa impermeable)','Escrituras o contrato de arriendo','Cartola bancaria reciente','Tarjetas de crédito/débito']},
+  {cat:'Agua y comida',items:['3 litros de agua por persona','Barras de cereal o galletas','Alimento para mascotas (si aplica)']},
+  {cat:'Medicamentos',items:['Medicamentos recetados (5 días)','Botiquín de primeros auxilios','Protector solar y repelente']},
+  {cat:'Comunicación',items:['Cargador portátil (cargado)','Radio a pilas con pilas nuevas','Lista de contactos en papel']},
+  {cat:'Ropa y abrigo',items:['Ropa para 3 días','Zapatillas o zapatos cómodos','Abrigo/impermeable']},
+  {cat:'Dinero y extras',items:['Efectivo en billetes pequeños','Linterna con pilas de repuesto','Silbato de emergencia','Frazada liviana']},
+];
+var clState={};
+function openCL(){
+  SND.click();
+  renderCL();
+  document.getElementById('cl-bg').classList.add('open');
+}
+function closeCL(){document.getElementById('cl-bg').classList.remove('open');}
+function renderCL(){
+  var body=document.getElementById('cl-body');
+  body.innerHTML='';
+  var total=0,done=0;
+  CL_ITEMS.forEach(function(sec,si){
+    var h=document.createElement('div');h.className='cl-section';
+    var t=document.createElement('h4');t.textContent=sec.cat;h.appendChild(t);
+    sec.items.forEach(function(item,ii){
+      var key=si+'-'+ii;
+      var d=document.createElement('div');
+      d.className='cl-item'+(clState[key]?' done':'');
+      d.innerHTML='<div class="cl-check">'+(clState[key]?'✓':'')+'</div><div class="cl-label">'+item+'</div>';
+      d.onclick=function(){
+        clState[key]=!clState[key];SND.click();renderCL();
+      };
+      h.appendChild(d);total++;if(clState[key])done++;
+    });
+    body.appendChild(h);
+  });
+  document.getElementById('cl-fill').style.width=(total?Math.round(done/total*100):0)+'%';
+  document.getElementById('cl-txt').textContent=done+' de '+total+' ítems listos';
+  if(done===total&&total>0){SND.success();}
+}
+
+// ── REPORTE CIUDADANO ────────────────────────────────────────────
+function openRep(){SND.click();document.getElementById('rep-bg').classList.add('open');}
+function closeRep(){document.getElementById('rep-bg').classList.remove('open');}
+function submitReport(){
+  var type=document.getElementById('rep-type').value;
+  var desc=document.getElementById('rep-desc').value;
+  SND.success();
+  closeRep();
+  // Show toast confirming report
+  showToast('Reporte enviado',''+type+(desc?' — '+desc.slice(0,30):''));
+  // In a real app, this would POST to an API
+}
+
+// ── DALTONISMO ───────────────────────────────────────────────────
+function toggleDaltonismo(v){
+  SND.click();
+  document.body.classList.toggle('daltonismo',v);
+}
 </script>
 </body>
 </html>
